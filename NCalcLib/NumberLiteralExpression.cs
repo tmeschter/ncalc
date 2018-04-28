@@ -11,7 +11,7 @@ namespace NCalcLib
         }
 
         public Token Token { get; }
-        public int Value => int.Parse(Token.Text);
+        public decimal Value => decimal.Parse(Token.Text);
 
         public override bool Equals(object obj) => Equals(obj as Expression);
         public override bool Equals(Expression other) =>

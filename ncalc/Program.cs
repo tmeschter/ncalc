@@ -17,7 +17,7 @@ namespace ncalc
                     break;
                 }
 
-                var expressionSyntax = Parser.ParseAdditionAndSubtraction(input);
+                var expressionSyntax = Parser.ParseSubmission(input);
                 if (expressionSyntax == null)
                 {
                     continue;
@@ -29,7 +29,7 @@ namespace ncalc
                     continue;
                 }
 
-                var lambda = System.Linq.Expressions.Expression.Lambda<Func<int>>(expression);
+                var lambda = System.Linq.Expressions.Expression.Lambda<Func<decimal>>(expression);
                 var compiledLambda = lambda.Compile();
                 var result = compiledLambda();
                 Console.WriteLine(result);

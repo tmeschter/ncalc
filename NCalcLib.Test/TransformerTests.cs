@@ -17,7 +17,7 @@ namespace NCalcLib.Test
             var syntax = NumberLiteralExpression(Token(0, "5"));
             var expression = (LinqExprs.ConstantExpression)Transformer.Transform(syntax);
 
-            Assert.Equal(expected: 5, actual: expression.Value);
+            Assert.Equal(expected: 5m, actual: expression.Value);
         }
     }
 }

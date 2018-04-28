@@ -34,6 +34,26 @@ namespace NCalcLib.Test
             Assert.Equal(expected: 5, actual: expression.Value);
         }
 
+        [Fact]
+        public void NumberLiteralExpression_DigitWithDecimalPoint()
+        {
+            var text = "5.";
+            var expression = Parser.ParseNumberLiteral(text);
+
+            Assert.Null(expression);
+        }
+
+        [Fact]
+        public void NumberLiteralExpression_DecimalDigits()
+        {
+            var text = "5.4";
+            var expression = Parser.ParseNumberLiteral(text);
+
+            AssertStartAndLength(expectedStart: 0, expectedLength: 3, node: expression);
+            Assert.Equal(expected: "5.4", actual: expression.Token.Text);
+            Assert.Equal(expected: 5.4m, actual: expression.Value);
+        }
+
         private static void AssertStartAndLength(int expectedStart, int expectedLength, Whitespace whitespace)
         {
             Assert.Equal(expected: expectedStart, actual: whitespace.Start);

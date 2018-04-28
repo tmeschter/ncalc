@@ -30,8 +30,6 @@ namespace NCalcLib
 
         public static NumberLiteralExpression ParseNumberLiteral(string text, int start = 0)
         {
-            int value = 0;
-
             var whitespace = ParseWhitespace(text, start);
             start = start + whitespace.Length;
 
@@ -39,10 +37,24 @@ namespace NCalcLib
             while (index < text.Length
                 && char.IsDigit(text[index]))
             {
-                value = value * 10;
-                value = value + (text[index] - '0');
-
                 index++;
+            }
+
+            if (index < text.Length
+                && text[index] == '.')
+            {
+                index++;
+
+                while (index < text.Length
+                    && char.IsDigit(text[index]))
+                {
+                    index++;
+                }
+
+                if (text[index - 1] == '.')
+                {
+                    return null;
+                }
             }
 
             int length = index - start;
