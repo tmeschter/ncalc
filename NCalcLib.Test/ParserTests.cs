@@ -289,8 +289,8 @@ namespace NCalcLib.Test
                 Token(0, "("),
                 BinaryExpression(
                     NumberLiteralExpression(Token(1, "1")),
-                    Token(Whitespace(2, " "), 3, "+"),
-                    NumberLiteralExpression(Token(Whitespace(4, " "), 5, "2"))),
+                    Token(Whitespace(2, " "), "+"),
+                    NumberLiteralExpression(Token(Whitespace(4, " "), "2"))),
                 Token(6, ")"));
 
             Assert.Equal(expected, actual: expression);
@@ -346,8 +346,8 @@ namespace NCalcLib.Test
 
             var expected = BinaryExpression(
                 IdentifierExpression(Token(0, "a")),
-                Token(Whitespace(1, " "), 2, "="),
-                NumberLiteralExpression(Token(Whitespace(3, " "), 4, "5")));
+                Token(Whitespace(1, " "), "="),
+                NumberLiteralExpression(Token(Whitespace(3, " "), "5")));
 
             Assert.Equal(expected, actual: expression);
         }
@@ -360,11 +360,11 @@ namespace NCalcLib.Test
 
             var expected = BinaryExpression(
                 IdentifierExpression(Token(0, "a")),
-                Token(Whitespace(1, " "), 2, "="),
+                Token(Whitespace(1, " "), "="),
                 BinaryExpression(
-                    IdentifierExpression(Token(Whitespace(3, " "), 4, "b")),
-                    Token(Whitespace(5, " "), 6, "="),
-                    IdentifierExpression(Token(Whitespace(7, " "), 8, "c"))));
+                    IdentifierExpression(Token(Whitespace(3, " "), "b")),
+                    Token(Whitespace(5, " "), "="),
+                    IdentifierExpression(Token(Whitespace(7, " "), "c"))));
 
             Assert.Equal(expected, actual: expression);
         }

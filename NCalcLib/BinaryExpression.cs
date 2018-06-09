@@ -28,5 +28,35 @@ namespace NCalcLib
                 Left.GetHashCode(),
                 Operator.GetHashCode(),
                 Right.GetHashCode());
+
+        public BinaryExpression WithLeft(Expression newLeft)
+        {
+            if (Left.Equals(newLeft))
+            {
+                return this;
+            }
+
+            return new BinaryExpression(newLeft, Operator, Right);
+        }
+
+        public BinaryExpression WithOperator(Token newOperator)
+        {
+            if (Operator.Equals(newOperator))
+            {
+                return this;
+            }
+
+            return new BinaryExpression(Left, newOperator, Right);
+        }
+
+        public BinaryExpression WithRight(Expression newRight)
+        {
+            if (Right.Equals(newRight))
+            {
+                return this;
+            }
+
+            return new BinaryExpression(Left, Operator, newRight);
+        }
     }
 }

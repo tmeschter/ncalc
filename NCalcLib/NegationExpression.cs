@@ -22,5 +22,25 @@ namespace NCalcLib
 
         public override int GetHashCode() =>
             Hash(OperatorToken.GetHashCode(), SubExpression.GetHashCode());
+
+        public NegationExpression WithOperator(Token newOperator)
+        {
+            if (OperatorToken.Equals(newOperator))
+            {
+                return this;
+            }
+
+            return new NegationExpression(newOperator, SubExpression);
+        }
+
+        public NegationExpression WithSubExpression(Expression newSubExpression)
+        {
+            if (SubExpression.Equals(newSubExpression))
+            {
+                return this;
+            }
+
+            return new NegationExpression(OperatorToken, newSubExpression);
+        }
     }
 }

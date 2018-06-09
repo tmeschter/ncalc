@@ -63,7 +63,7 @@ namespace NCalcLib
                 return null;
             }
 
-            var numberToken = new Token(whitespace, start, text.Substring(start, length));
+            var numberToken = new Token(whitespace, text.Substring(start, length));
 
             return new NumberLiteralExpression(numberToken);
         }
@@ -200,7 +200,7 @@ namespace NCalcLib
                 return null;
             }
 
-            return new Token(whitespace, tokenStart, text.Substring(tokenStart, tokenLength));
+            return new Token(whitespace, text.Substring(tokenStart, tokenLength));
         }
 
         public static Expression ParseMultiplicationAndDivision(string text, int start = 0)
@@ -259,7 +259,7 @@ namespace NCalcLib
 
             int length = index - start;
 
-            var identifierToken = new Token(whitespace, start, text.Substring(start, length));
+            var identifierToken = new Token(whitespace, text.Substring(start, length));
 
             return new IdentifierExpression(identifierToken);
         }

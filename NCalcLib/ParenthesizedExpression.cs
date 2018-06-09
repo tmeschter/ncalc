@@ -33,5 +33,35 @@ namespace NCalcLib
                 LeftParen.GetHashCode(),
                 SubExpression.GetHashCode(),
                 RightParen.GetHashCode());
+
+        public ParenthesizedExpression WithLeftParen(Token newLeftParen)
+        {
+            if (LeftParen.Equals(newLeftParen))
+            {
+                return this;
+            }
+
+            return new ParenthesizedExpression(newLeftParen, SubExpression, RightParen);
+        }
+
+        public ParenthesizedExpression WithSubExpression(Expression newSubExpression)
+        {
+            if (SubExpression.Equals(newSubExpression))
+            {
+                return this;
+            }
+
+            return new ParenthesizedExpression(LeftParen, newSubExpression, RightParen);
+        }
+
+        public ParenthesizedExpression WithRightParen(Token newRightParen)
+        {
+            if (RightParen.Equals(newRightParen))
+            {
+                return this;
+            }
+
+            return new ParenthesizedExpression(LeftParen, SubExpression, newRightParen);
+        }
     }
 }
