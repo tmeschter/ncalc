@@ -11,7 +11,7 @@ namespace NCalcLib
         public static Expression ParseSubmission(string text)
         {
             var start = 0;
-            var expression = ParseAdditionAndSubtraction(text, start);
+            var expression = ParseAssignment(text, start);
 
             if (expression != null)
             {
@@ -97,7 +97,8 @@ namespace NCalcLib
         public static Expression ParseOperandExpression(string text, int start = 0)
         {
             return ParseNumberLiteral(text, start)
-                ?? ParseParenthensizedExpression(text, start);
+                ?? ParseParenthensizedExpression(text, start)
+                ?? ParseIdentifier(text, start);
         }
 
         public static Expression ParseParenthensizedExpression(string text, int start = 0)
@@ -233,6 +234,64 @@ namespace NCalcLib
             }
 
             return expression;
+        }
+
+        public static IdentifierExpression ParseIdentifier(string text, int start = 0)
+        {
+            var whitespace = ParseWhitespace(text, start);
+            start = start + whitespace.Length;
+
+            int index = start;
+            if (char.IsLetter(text[index]))
+            {
+                index++;
+            }
+            else
+            {
+                return null;
+            }
+
+            while (index < text.Length
+                && char.IsLetterOrDigit(text[index]))
+            {
+                index++;
+            }
+
+            int length = index - start;
+
+            var identifierToken = new Token(whitespace, start, text.Substring(start, length));
+
+            return new IdentifierExpression(identifierToken);
+        }
+
+        public static Expression ParseAssignment(string text, int start = 0)
+        {
+            int index = start;
+            var identifier = ParseIdentifier(text, index);
+            if (identifier != null)
+            {
+                index = index + identifier.Length;
+                var equalSign = ParseToken(text, "=", index);
+                if (equalSign != null)
+                {
+                    index = index + equalSign.Length;
+
+                    var subExpression = ParseExpression(text, index);
+                    if (subExpression != null)
+                    {
+                        return new BinaryExpression(identifier, equalSign, subExpression);
+                    }
+
+                    return null;
+                }
+            }
+
+            return ParseAdditionAndSubtraction(text, start);
+        }
+
+        public static Expression ParseExpression(string text, int start = 0)
+        {
+            return ParseAssignment(text, start);
         }
     }
 }

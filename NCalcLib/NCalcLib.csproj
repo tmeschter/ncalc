@@ -40,11 +40,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssignmentStatement.cs" />
     <Compile Include="BinaryExpression.cs" />
+    <Compile Include="Globals.cs" />
+    <Compile Include="IdentifierExpression.cs" />
     <Compile Include="NegationExpression.cs" />
     <Compile Include="Node.cs" />
-    <Compile Include="NumberLiteralExpression.cs" />
     <Compile Include="Expression.cs" />
+    <Compile Include="NumberLiteralExpression.cs" />
     <Compile Include="ParenthesizedExpression.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

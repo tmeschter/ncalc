@@ -26,9 +26,22 @@ namespace NCalcLib
                 case ParenthesizedExpression paren:
                     return Transform(paren.SubExpression);
 
+                case IdentifierExpression identifier:
+                    return TransformIdentifier(identifier);
+
                 default:
                     throw new InvalidOperationException();
             }
+        }
+
+        private static LinqExprs.Expression TransformIdentifier(IdentifierExpression identifier)
+        {
+            return LinqExprs.Expression.Call(
+                LinqExprs.Expression.Property(
+                    expression: null,
+                    property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
+                typeof(Globals).GetMethod(nameof(Globals.GetVariable)),
+                LinqExprs.Expression.Constant(identifier.Id));
         }
 
         private static LinqExprs.Expression TransformBinop(BinaryExpression binop)
@@ -49,6 +62,15 @@ namespace NCalcLib
 
                 case "/":
                     return LinqExprs.Expression.Divide(left, right);
+
+                case "=":
+                    return LinqExprs.Expression.Call(
+                        LinqExprs.Expression.Property(
+                            expression: null,
+                            property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
+                        typeof(Globals).GetMethod(nameof(Globals.SetVariable)),
+                        LinqExprs.Expression.Constant(((IdentifierExpression)binop.Left).Id),
+                        right);
 
                 default:
                     throw new InvalidOperationException();

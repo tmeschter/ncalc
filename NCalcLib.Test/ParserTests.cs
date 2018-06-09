@@ -295,5 +295,78 @@ namespace NCalcLib.Test
 
             Assert.Equal(expected, actual: expression);
         }
+
+        [Fact]
+        public void Identifier_SingleLetter()
+        {
+            var text = "a";
+            var expression = Parser.ParseIdentifier(text);
+
+            var expected = IdentifierExpression(Token(0, "a"));
+
+            Assert.Equal(expected, actual: expression);
+        }
+
+        [Fact]
+        public void Identifier_MultipleLetters()
+        {
+            var text = "abc";
+            var expression = Parser.ParseIdentifier(text);
+
+            var expected = IdentifierExpression(Token(0, "abc"));
+
+            Assert.Equal(expected, actual: expression);
+        }
+
+        [Fact]
+        public void Identifier_LetterAndNumbers()
+        {
+            var text = "a123";
+            var expression = Parser.ParseIdentifier(text);
+
+            var expected = IdentifierExpression(Token(0, "a123"));
+
+            Assert.Equal(expected, actual: expression);
+        }
+
+        [Fact]
+        public void Identifier_StartsWithNumber()
+        {
+            var text = "1abc";
+            var expression = Parser.ParseIdentifier(text);
+
+            Assert.Null(expression);
+        }
+
+        [Fact]
+        public void Assignment_Single()
+        {
+            var text = "a = 5";
+            var expression = Parser.ParseAssignment(text);
+
+            var expected = BinaryExpression(
+                IdentifierExpression(Token(0, "a")),
+                Token(Whitespace(1, " "), 2, "="),
+                NumberLiteralExpression(Token(Whitespace(3, " "), 4, "5")));
+
+            Assert.Equal(expected, actual: expression);
+        }
+
+        [Fact]
+        public void Assignment_Double()
+        {
+            var text = "a = b = c";
+            var expression = Parser.ParseAssignment(text);
+
+            var expected = BinaryExpression(
+                IdentifierExpression(Token(0, "a")),
+                Token(Whitespace(1, " "), 2, "="),
+                BinaryExpression(
+                    IdentifierExpression(Token(Whitespace(3, " "), 4, "b")),
+                    Token(Whitespace(5, " "), 6, "="),
+                    IdentifierExpression(Token(Whitespace(7, " "), 8, "c"))));
+
+            Assert.Equal(expected, actual: expression);
+        }
     }
 }
