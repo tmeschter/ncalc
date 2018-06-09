@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LinqExprs = System.Linq.Expressions;
+using LinqExpression = System.Linq.Expressions.Expression;
 
 namespace NCalcLib
 {
     public class Transformer
     {
-        public static LinqExprs.Expression Transform(Expression e)
+        public static LinqExpression Transform(Expression e)
         {
             switch (e)
             {
@@ -18,10 +14,10 @@ namespace NCalcLib
 
                 case NegationExpression negation:
                     var subexpression = Transform(negation.SubExpression);
-                    return LinqExprs.Expression.Negate(subexpression);
+                    return LinqExpression.Negate(subexpression);
 
                 case NumberLiteralExpression number:
-                    return LinqExprs.Expression.Constant(number.Value);
+                    return LinqExpression.Constant(number.Value);
 
                 case ParenthesizedExpression paren:
                     return Transform(paren.SubExpression);
@@ -34,17 +30,17 @@ namespace NCalcLib
             }
         }
 
-        private static LinqExprs.Expression TransformIdentifier(IdentifierExpression identifier)
+        private static LinqExpression TransformIdentifier(IdentifierExpression identifier)
         {
-            return LinqExprs.Expression.Call(
-                LinqExprs.Expression.Property(
+            return LinqExpression.Call(
+                LinqExpression.Property(
                     expression: null,
                     property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
                 typeof(Globals).GetMethod(nameof(Globals.GetVariable)),
-                LinqExprs.Expression.Constant(identifier.Id));
+                LinqExpression.Constant(identifier.Id));
         }
 
-        private static LinqExprs.Expression TransformBinop(BinaryExpression binop)
+        private static LinqExpression TransformBinop(BinaryExpression binop)
         {
             var left = Transform(binop.Left);
             var right = Transform(binop.Right);
@@ -52,24 +48,24 @@ namespace NCalcLib
             switch (binop.Operator.Text)
             {
                 case "+":
-                    return LinqExprs.Expression.Add(left, right);
+                    return LinqExpression.Add(left, right);
 
                 case "-":
-                    return LinqExprs.Expression.Subtract(left, right);
+                    return LinqExpression.Subtract(left, right);
 
                 case "*":
-                    return LinqExprs.Expression.Multiply(left, right);
+                    return LinqExpression.Multiply(left, right);
 
                 case "/":
-                    return LinqExprs.Expression.Divide(left, right);
+                    return LinqExpression.Divide(left, right);
 
                 case "=":
-                    return LinqExprs.Expression.Call(
-                        LinqExprs.Expression.Property(
+                    return LinqExpression.Call(
+                        LinqExpression.Property(
                             expression: null,
                             property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
                         typeof(Globals).GetMethod(nameof(Globals.SetVariable)),
-                        LinqExprs.Expression.Constant(((IdentifierExpression)binop.Left).Id),
+                        LinqExpression.Constant(((IdentifierExpression)binop.Left).Id),
                         right);
 
                 default:
