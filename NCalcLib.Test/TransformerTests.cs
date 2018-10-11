@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Xunit;
 using LinqExprs = System.Linq.Expressions;
 using static NCalcLib.SyntaxFactory;
+using System.Collections.Immutable;
 
 namespace NCalcLib.Test
 {
@@ -15,9 +16,10 @@ namespace NCalcLib.Test
         public void NumberLiteral()
         {
             var syntax = NumberLiteralExpression(Token(0, "5"));
-            var expression = (LinqExprs.ConstantExpression)Transformer.Transform(syntax);
 
-            Assert.Equal(expected: 5m, actual: expression.Value);
+            (var newContext, var expression) = Transformer.Transform(BindingContext.Empty, syntax);
+
+            Assert.Equal(expected: 5m, actual: ((LinqExprs.ConstantExpression)expression).Value);
         }
     }
 }

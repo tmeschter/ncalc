@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Immutable;
 using NCalcLib;
+using LinqExpression = System.Linq.Expressions.Expression;
 
 namespace ncalc
 {
@@ -7,6 +9,7 @@ namespace ncalc
     {
         static void Main(string[] args)
         {
+            var globalBindingContext = BindingContext.Empty;
             while (true)
             {
                 Console.Write("> ");
@@ -23,17 +26,18 @@ namespace ncalc
                     continue;
                 }
 
-                var expression = Transformer.Transform(expressionSyntax);
+                (var newBindingContext, var expression) = Transformer.Transform(globalBindingContext, expressionSyntax);
                 if (expression == null)
                 {
                     continue;
                 }
 
-                var lambda = System.Linq.Expressions.Expression.Lambda<Func<decimal>>(expression);
+                globalBindingContext = newBindingContext;
+
+                var lambda = LinqExpression.Lambda<Func<decimal>>(expression);
                 var compiledLambda = lambda.Compile();
                 var result = compiledLambda();
                 Console.WriteLine(result);
-
             }
         }
     }

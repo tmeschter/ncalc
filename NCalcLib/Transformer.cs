@@ -5,68 +5,92 @@ namespace NCalcLib
 {
     public class Transformer
     {
-        public static LinqExpression Transform(Expression e)
+        public static (BindingContext, LinqExpression) Transform(BindingContext bindingContext, Expression e)
         {
             switch (e)
             {
                 case BinaryExpression binop:
-                    return TransformBinop(binop);
+                    return TransformBinop(bindingContext, binop);
 
                 case NegationExpression negation:
-                    var subexpression = Transform(negation.SubExpression);
-                    return LinqExpression.Negate(subexpression);
+                    LinqExpression subexpression;
+                    (bindingContext, subexpression) = Transform(bindingContext, negation.SubExpression);
+                    return (bindingContext, LinqExpression.Negate(subexpression));
 
                 case NumberLiteralExpression number:
-                    return LinqExpression.Constant(number.Value);
+                    return (bindingContext, LinqExpression.Constant(number.Value));
 
                 case ParenthesizedExpression paren:
-                    return Transform(paren.SubExpression);
+                    return Transform(bindingContext, paren.SubExpression);
 
                 case IdentifierExpression identifier:
-                    return TransformIdentifier(identifier);
+                    return TransformIdentifier(bindingContext, identifier);
 
                 default:
                     throw new InvalidOperationException();
             }
         }
 
-        private static LinqExpression TransformIdentifier(IdentifierExpression identifier)
+        private static (BindingContext, LinqExpression) TransformIdentifier(BindingContext bindingContext, IdentifierExpression identifier)
         {
-            return LinqExpression.Call(
-                LinqExpression.Property(
-                    expression: null,
-                    property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
-                typeof(Globals).GetMethod(nameof(Globals.GetVariable)),
-                LinqExpression.Constant(identifier.Id));
+            var type = bindingContext.GetVariableType(identifier.Id);
+            var expression = LinqExpression.Convert(
+                LinqExpression.Call(
+                    LinqExpression.Property(
+                        expression: null,
+                        property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
+                    typeof(Globals).GetMethod(nameof(Globals.GetVariable)),
+                    LinqExpression.Constant(identifier.Id)),
+                type);
+
+            return (bindingContext, expression);
         }
 
-        private static LinqExpression TransformBinop(BinaryExpression binop)
+        private static (BindingContext, LinqExpression) TransformBinop(BindingContext bindingContext, BinaryExpression binop)
         {
-            var left = Transform(binop.Left);
-            var right = Transform(binop.Right);
-
-            switch (binop.Operator.Text)
+            (BindingContext, LinqExpression) transformStandardBinop(Func<LinqExpression, LinqExpression, LinqExpression> createBinop)
             {
-                case "+":
-                    return LinqExpression.Add(left, right);
+                LinqExpression left;
+                LinqExpression right;
 
-                case "-":
-                    return LinqExpression.Subtract(left, right);
+                (bindingContext, left) = Transform(bindingContext, binop.Left);
+                (bindingContext, right) = Transform(bindingContext, binop.Right);
+                return (bindingContext, createBinop(left, right));
+            }
 
-                case "*":
-                    return LinqExpression.Multiply(left, right);
+            (BindingContext, LinqExpression) transformAssignment()
+            {
+                var variableName = ((IdentifierExpression)binop.Left).Id;
+                LinqExpression right;
+                (bindingContext, right) = Transform(bindingContext, binop.Right);
+                bindingContext = bindingContext.SetVariableType(variableName, right.Type);
 
-                case "/":
-                    return LinqExpression.Divide(left, right);
-
-                case "=":
-                    return LinqExpression.Call(
+                return (bindingContext,
+                     LinqExpression.Call(
                         LinqExpression.Property(
                             expression: null,
                             property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
                         typeof(Globals).GetMethod(nameof(Globals.SetVariable)),
-                        LinqExpression.Constant(((IdentifierExpression)binop.Left).Id),
-                        right);
+                    LinqExpression.Constant(variableName),
+                    right));
+            }
+
+            switch (binop.Operator.Text)
+            {
+                case "+":
+                    return transformStandardBinop(LinqExpression.Add);
+
+                case "-":
+                    return transformStandardBinop(LinqExpression.Subtract);
+
+                case "*":
+                    return transformStandardBinop(LinqExpression.Multiply);
+
+                case "/":
+                    return transformStandardBinop(LinqExpression.Divide);
+
+                case "=":
+                    return transformAssignment();
 
                 default:
                     throw new InvalidOperationException();

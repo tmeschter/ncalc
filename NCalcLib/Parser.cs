@@ -113,7 +113,7 @@ namespace NCalcLib
 
             index = index + leftParen.Length;
 
-            var subExpression = ParseAdditionAndSubtraction(text, index);
+            var subExpression = ParseExpression(text, index);
             if (subExpression == null)
             {
                 return null;
