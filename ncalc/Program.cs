@@ -31,10 +31,11 @@ namespace ncalc
                 {
                     continue;
                 }
+                expression = LinqExpression.Convert(expression, typeof(object));
 
                 globalBindingContext = newBindingContext;
 
-                var lambda = LinqExpression.Lambda<Func<decimal>>(expression);
+                var lambda = LinqExpression.Lambda<Func<object>>(expression);
                 var compiledLambda = lambda.Compile();
                 var result = compiledLambda();
                 Console.WriteLine(result);

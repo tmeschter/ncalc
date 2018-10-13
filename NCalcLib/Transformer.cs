@@ -12,6 +12,12 @@ namespace NCalcLib
                 case BinaryExpression binop:
                     return TransformBinop(bindingContext, binop);
 
+                case BooleanLiteralExpression boolean:
+                    return (bindingContext, LinqExpression.Constant(boolean.Value));
+
+                case IdentifierExpression identifier:
+                    return TransformIdentifier(bindingContext, identifier);
+
                 case NegationExpression negation:
                     LinqExpression subexpression;
                     (bindingContext, subexpression) = Transform(bindingContext, negation.SubExpression);
@@ -22,9 +28,6 @@ namespace NCalcLib
 
                 case ParenthesizedExpression paren:
                     return Transform(bindingContext, paren.SubExpression);
-
-                case IdentifierExpression identifier:
-                    return TransformIdentifier(bindingContext, identifier);
 
                 default:
                     throw new InvalidOperationException();
@@ -72,28 +75,23 @@ namespace NCalcLib
                             property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
                         typeof(Globals).GetMethod(nameof(Globals.SetVariable)),
                     LinqExpression.Constant(variableName),
-                    right));
+                    LinqExpression.Convert(right, typeof(object))));
             }
 
             switch (binop.Operator.Text)
             {
-                case "+":
-                    return transformStandardBinop(LinqExpression.Add);
-
-                case "-":
-                    return transformStandardBinop(LinqExpression.Subtract);
-
-                case "*":
-                    return transformStandardBinop(LinqExpression.Multiply);
-
-                case "/":
-                    return transformStandardBinop(LinqExpression.Divide);
-
-                case "=":
-                    return transformAssignment();
-
-                default:
-                    throw new InvalidOperationException();
+                case "+": return transformStandardBinop(LinqExpression.Add);
+                case "-": return transformStandardBinop(LinqExpression.Subtract);
+                case "*": return transformStandardBinop(LinqExpression.Multiply);
+                case "/": return transformStandardBinop(LinqExpression.Divide);
+                case "<": return transformStandardBinop(LinqExpression.LessThan);
+                case "<=": return transformStandardBinop(LinqExpression.LessThanOrEqual);
+                case ">": return transformStandardBinop(LinqExpression.GreaterThan);
+                case ">=": return transformStandardBinop(LinqExpression.GreaterThanOrEqual);
+                case "!=": return transformStandardBinop(LinqExpression.NotEqual);
+                case "==": return transformStandardBinop(LinqExpression.Equal);
+                case "=": return transformAssignment();
+                default: throw new InvalidOperationException();
             }
         }
     }

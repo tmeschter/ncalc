@@ -6,16 +6,16 @@ namespace NCalcLib
     {
         public static Globals Singleton { get; } = new Globals();
 
-        private Dictionary<string, decimal> _variables;
+        private Dictionary<string, object> _variables;
 
         public Globals()
         {
-            _variables = new Dictionary<string, decimal>();
+            _variables = new Dictionary<string, object>();
         }
 
-        public decimal GetVariable(string variable)
+        public object GetVariable(string variable)
         {
-            if (_variables.TryGetValue(variable, out decimal value))
+            if (_variables.TryGetValue(variable, out object value))
             {
                 return value;
             }
@@ -25,7 +25,7 @@ namespace NCalcLib
             }
         }
 
-        public decimal SetVariable(string variable, decimal value)
+        public object SetVariable(string variable, object value)
         {
             _variables[variable] = value;
             return value;

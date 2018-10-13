@@ -98,7 +98,8 @@ namespace NCalcLib
         {
             return ParseNumberLiteral(text, start)
                 ?? ParseParenthensizedExpression(text, start)
-                ?? ParseIdentifier(text, start);
+                ?? ParseBooleanLiteral(text, start)
+                ?? (Expression)ParseIdentifier(text, start);
         }
 
         public static Expression ParseParenthensizedExpression(string text, int start = 0)
@@ -176,6 +177,66 @@ namespace NCalcLib
             return expression;
         }
 
+        public static Expression ParseEquality(string text, int start = 0)
+        {
+            var index = start;
+            var expression = ParseRelational(text, index);
+            if (expression == null)
+            {
+                return null;
+            }
+
+            index = index + expression.Length;
+
+            var op = ParseToken(text, "==", index)
+                ?? ParseToken(text, "!=", index);
+            if (op != null)
+            {
+                index = index + op.Length;
+                var rightHandExpression = ParseRelational(text, index);
+                if (rightHandExpression == null)
+                {
+                    return null;
+                }
+
+                index = index + rightHandExpression.Length;
+                expression = new BinaryExpression(expression, op, rightHandExpression);
+            }
+
+            return expression;
+        }
+
+        public static Expression ParseRelational(string text, int start = 0)
+        {
+            var index = start;
+            var expression = ParseAdditionAndSubtraction(text, index);
+            if (expression == null)
+            {
+                return null;
+            }
+
+            index = index + expression.Length;
+
+            var op = ParseToken(text, "<=", index)
+                ?? ParseToken(text, ">=", index)
+                ?? ParseToken(text, "<", index)
+                ?? ParseToken(text, ">", index);
+            if (op != null)
+            {
+                index = index + op.Length;
+                var rightHandExpression = ParseAdditionAndSubtraction(text, index);
+                if (rightHandExpression == null)
+                {
+                    return null;
+                }
+
+                index = index + rightHandExpression.Length;
+                expression = new BinaryExpression(expression, op, rightHandExpression);
+            }
+
+            return expression;
+        }
+
         public static Token ParseToken(string text, string expected, int start = 0)
         {
             int index = start;
@@ -241,6 +302,19 @@ namespace NCalcLib
             var whitespace = ParseWhitespace(text, start);
             start = start + whitespace.Length;
 
+            int length = IdentifierLength(text, start);
+            if (length == 0)
+            {
+                return null;
+            }
+
+            var identifierToken = new Token(whitespace, text.Substring(start, length));
+
+            return new IdentifierExpression(identifierToken);
+        }
+
+        private static int IdentifierLength(string text, int start)
+        {
             int index = start;
             if (char.IsLetter(text[index]))
             {
@@ -248,7 +322,7 @@ namespace NCalcLib
             }
             else
             {
-                return null;
+                return 0;
             }
 
             while (index < text.Length
@@ -257,11 +331,7 @@ namespace NCalcLib
                 index++;
             }
 
-            int length = index - start;
-
-            var identifierToken = new Token(whitespace, text.Substring(start, length));
-
-            return new IdentifierExpression(identifierToken);
+            return index - start;
         }
 
         public static Expression ParseAssignment(string text, int start = 0)
@@ -272,7 +342,9 @@ namespace NCalcLib
             {
                 index = index + identifier.Length;
                 var equalSign = ParseToken(text, "=", index);
-                if (equalSign != null)
+                // Make sure we didn't parse a '=' when we should have parsed a '=='.
+                if (equalSign != null
+                    && text[index + equalSign.Length] != '=')
                 {
                     index = index + equalSign.Length;
 
@@ -286,12 +358,32 @@ namespace NCalcLib
                 }
             }
 
-            return ParseAdditionAndSubtraction(text, start);
+            return ParseEquality(text, start);
         }
 
         public static Expression ParseExpression(string text, int start = 0)
         {
             return ParseAssignment(text, start);
+        }
+
+        public static BooleanLiteralExpression ParseBooleanLiteral(string text, int start = 0)
+        {
+            var whitespace = ParseWhitespace(text, start);
+            start = start + whitespace.Length;
+
+            int length = IdentifierLength(text, start);
+            if (length == 0)
+            {
+                return null;
+            }
+
+            if (string.Compare(text, start, "true", 0, length) == 0
+                || string.Compare(text, start, "false", 0, length) == 0)
+            {
+                return new BooleanLiteralExpression(new Token(whitespace, text.Substring(start, length)));
+            }
+
+            return null;
         }
     }
 }

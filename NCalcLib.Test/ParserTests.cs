@@ -368,5 +368,79 @@ namespace NCalcLib.Test
 
             Assert.Equal(expected, actual: expression);
         }
+
+        [Fact]
+        public void BooleanLiteral_True()
+        {
+            var text = "true";
+            var expression = Parser.ParseBooleanLiteral(text);
+
+            var expected = BooleanLiteralExpression(Token(0, "true"));
+
+            Assert.Equal(expected, actual: expression);
+        }
+
+        [Fact]
+        public void BooleanLiteral_False()
+        {
+            var text = "false";
+            var expression = Parser.ParseBooleanLiteral(text);
+
+            var expected = BooleanLiteralExpression(Token(0, "false"));
+
+            Assert.Equal(expected, actual: expression);
+        }
+
+        [Fact]
+        public void BooleanLiteral_NotABoolean()
+        {
+            var text = "foo";
+            var expression = Parser.ParseBooleanLiteral(text);
+
+            Assert.Null(expression);
+        }
+
+        [Fact]
+        public void BooleanLiteral_ExtraText()
+        {
+            var text = "truefoo";
+            var expression = Parser.ParseBooleanLiteral(text);
+
+            Assert.Null(expression);
+        }
+
+        [Fact]
+        public void Relational_LessThan()
+        {
+            var text = "5 < 4";
+            var expression = Parser.ParseRelational(text);
+
+            var expected = BinaryExpression(
+                NumberLiteralExpression(Token(0, "5")),
+                Token(Whitespace(1, " "), "<"),
+                NumberLiteralExpression(Token(Whitespace(3, " "), "4")));
+
+            Assert.Equal(expected, actual: expression);
+        }
+
+        [Fact]
+        public void Assignment_Parenthesized()
+        {
+            var text = "a = (b = 2)";
+            var expression = Parser.ParseAssignment(text);
+
+            var expected = BinaryExpression(
+                IdentifierExpression(Token(0, "a")),
+                Token(Whitespace(1, " "), "="),
+                ParenthesizedExpression(
+                    Token(Whitespace(3, " "), "("),
+                    BinaryExpression(
+                        IdentifierExpression(Token(5, "b")),
+                        Token(Whitespace(6, " "), "="),
+                        NumberLiteralExpression(Token(Whitespace(8, " "), "2"))),
+                    Token(10, ")")));
+
+            Assert.Equal(expected, actual: expression);
+        }
     }
 }

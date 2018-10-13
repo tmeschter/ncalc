@@ -21,5 +21,14 @@ namespace NCalcLib.Test
 
             Assert.Equal(expected: 5m, actual: ((LinqExprs.ConstantExpression)expression).Value);
         }
+
+        [Fact]
+        public void BooleanLiteral()
+        {
+            var syntax = BooleanLiteralExpression(Token(0, "true"));
+            (var newContext, var expression) = Transformer.Transform(BindingContext.Empty, syntax);
+
+            Assert.True((bool)((LinqExprs.ConstantExpression)expression).Value);
+        }
     }
 }
