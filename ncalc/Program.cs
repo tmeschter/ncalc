@@ -20,7 +20,8 @@ namespace ncalc
                     break;
                 }
 
-                var expressionSyntax = Parser.ParseSubmission(input);
+                var tokens = Lexer.LexSubmission(input);
+                var expressionSyntax = Parser.ParseSubmission(tokens);
                 if (expressionSyntax == null)
                 {
                     continue;

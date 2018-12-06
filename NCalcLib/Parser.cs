@@ -1,389 +1,234 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace NCalcLib
 {
+    public class ParseResult
+    {
+        public Expression Expression { get; }
+        public int NextTokenIndex { get; }
+
+        public ParseResult(Expression expression, int nextTokenIndex)
+        {
+            Expression = expression;
+            NextTokenIndex = nextTokenIndex;
+        }
+    }
+
     public class Parser
     {
-        public static Expression ParseSubmission(string text)
+        public static Expression ParseSubmission(ImmutableArray<Token> tokens)
         {
             var start = 0;
-            var expression = ParseAssignment(text, start);
+            var result = ParseAssignment(tokens, start);
 
-            if (expression != null)
-            {
-                start = expression.Length;
-            }
-
-            var whitespace = ParseWhitespace(text, start);
-
-            if (whitespace.Start + whitespace.Length != text.Length)
+            if (result == null)
             {
                 return null;
             }
 
-            return expression;
-        }
-
-        public static NumberLiteralExpression ParseNumberLiteral(string text, int start = 0)
-        {
-            var whitespace = ParseWhitespace(text, start);
-            start = start + whitespace.Length;
-
-            int index = start;
-            while (index < text.Length
-                && char.IsDigit(text[index]))
+            if (result != null
+                && result.NextTokenIndex == tokens.Length - 1
+                && tokens[result.NextTokenIndex].Type == TokenType.EndOfInput)
             {
-                index++;
-            }
-
-            if (index < text.Length
-                && text[index] == '.')
-            {
-                index++;
-
-                while (index < text.Length
-                    && char.IsDigit(text[index]))
-                {
-                    index++;
-                }
-
-                if (text[index - 1] == '.')
-                {
-                    return null;
-                }
-            }
-
-            int length = index - start;
-            if (length == 0)
-            {
-                return null;
-            }
-
-            var numberToken = new Token(whitespace, text.Substring(start, length));
-
-            return new NumberLiteralExpression(numberToken);
-        }
-
-        public static Expression ParseNegationExpression(string text, int start = 0)
-        {
-            int index = start;
-
-            var operatorToken = ParseToken(text, "-", index);
-
-            if (operatorToken != null)
-            {
-                index = index + operatorToken.Length;
-            }
-
-            var subExpression = ParseOperandExpression(text, index);
-
-            if (subExpression != null)
-            {
-                if (operatorToken != null)
-                {
-                    return new NegationExpression(operatorToken, subExpression);
-                }
-
-                return subExpression;
+                return result.Expression;
             }
 
             return null;
         }
 
-        public static Expression ParseOperandExpression(string text, int start = 0)
+        public static ParseResult ParseNumberLiteral(ImmutableArray<Token> tokens, int start = 0) =>
+            start < tokens.Length && tokens[start].Type == TokenType.NumberLiteral
+            ? new ParseResult(new NumberLiteralExpression(tokens[start]), start + 1)
+            : null;
+
+        public static ParseResult ParseNegationExpression(ImmutableArray<Token> tokens, int start = 0)
         {
-            return ParseNumberLiteral(text, start)
-                ?? ParseParenthensizedExpression(text, start)
-                ?? ParseBooleanLiteral(text, start)
-                ?? (Expression)ParseIdentifier(text, start);
+            Token operatorToken = GetNextToken(tokens, start, TokenType.Minus);
+            if (operatorToken != null)
+            {
+                start = start + 1;
+            }
+
+            var subExpressionParseResult = ParseOperandExpression(tokens, start);
+            if (subExpressionParseResult != null)
+            {
+                if (operatorToken != null)
+                {
+                    return new ParseResult(new NegationExpression(operatorToken, subExpressionParseResult.Expression), subExpressionParseResult.NextTokenIndex);
+                }
+
+                return subExpressionParseResult;
+            }
+
+            return null;
         }
 
-        public static Expression ParseParenthensizedExpression(string text, int start = 0)
+        public static ParseResult ParseOperandExpression(ImmutableArray<Token> tokens, int start = 0)
         {
-            int index = start;
-
-            var leftParen = ParseToken(text, "(", index);
-            if (leftParen == null)
-            {
-                return null;
-            }
-
-            index = index + leftParen.Length;
-
-            var subExpression = ParseExpression(text, index);
-            if (subExpression == null)
-            {
-                return null;
-            }
-
-            index = index + subExpression.Length;
-
-            var rightParen = ParseToken(text, ")", index);
-            if (rightParen == null)
-            {
-                return null;
-            }
-
-            return new ParenthesizedExpression(leftParen, subExpression, rightParen);
+            return ParseNumberLiteral(tokens, start)
+                ?? ParseParenthensizedExpression(tokens, start)
+                ?? ParseBooleanLiteral(tokens, start)
+                ?? ParseIdentifier(tokens, start);
         }
 
-        public static Whitespace ParseWhitespace(string text, int start = 0)
+        public static ParseResult ParseParenthensizedExpression(ImmutableArray<Token> tokens, int start = 0)
         {
             int index = start;
 
-            while (index < text.Length
-                && char.IsWhiteSpace(text[index]))
+            Token leftParenToken = GetNextToken(tokens, index, TokenType.LeftParen);
+            if (leftParenToken == null)
             {
-                index++;
+                return null;
             }
 
-            return new Whitespace(start, text.Substring(start, index - start));
+            index = index + 1;
+
+            var subExpressionParseResult = ParseExpression(tokens, index);
+            if (subExpressionParseResult == null)
+            {
+                return null;
+            }
+
+            index = subExpressionParseResult.NextTokenIndex;
+
+            Token rightParenToken = GetNextToken(tokens, index, TokenType.RightParen);
+            if (rightParenToken == null)
+            {
+                return null;
+            }
+
+            index = index + 1;
+
+            return new ParseResult(new ParenthesizedExpression(leftParenToken, subExpressionParseResult.Expression, rightParenToken), index);
         }
 
-        public static Expression ParseAdditionAndSubtraction(string text, int start = 0)
+        private static Token GetNextToken(ImmutableArray<Token> tokens, int index, TokenType tokenType) =>
+            index < tokens.Length && tokens[index].Type == tokenType
+                ? tokens[index]
+                : null;
+
+        private static Token GetNextToken(ImmutableArray<Token> tokens, int index, params TokenType[] tokenTypes)
+        {
+            foreach (var tokenType in tokenTypes)
+            {
+                var token = GetNextToken(tokens, index, tokenType);
+                if (token != null)
+                {
+                    return token;
+                }
+            }
+
+            return null;
+        }
+
+        public static ParseResult ParseAdditionAndSubtraction(ImmutableArray<Token> tokens, int start = 0)
+        {
+            return ParseLeftAssociativeBinop(tokens, start, new[] { TokenType.Plus, TokenType.Minus }, ParseMultiplicationAndDivision);
+        }
+
+        public static ParseResult ParseEquality(ImmutableArray<Token> tokens, int start = 0)
+        {
+            return ParseLeftAssociativeBinop(tokens, start, new[] { TokenType.EqualEqual, TokenType.BangEqual }, ParseRelational);
+        }
+
+        private static ParseResult ParseLeftAssociativeBinop(ImmutableArray<Token> tokens, int start, TokenType[] opTokenTypes, Func<ImmutableArray<Token>, int, ParseResult> subExpressionParser)
         {
             var index = start;
-
-            var expression = ParseMultiplicationAndDivision(text, index);
-            if (expression == null)
+            var expressionParseResult = subExpressionParser(tokens, index);
+            if (expressionParseResult == null)
             {
                 return null;
             }
 
-            index = index + expression.Length;
+            var expression = expressionParseResult.Expression;
+            index = expressionParseResult.NextTokenIndex;
 
-            var op = ParseToken(text, "+", index)
-                    ?? ParseToken(text, "-", index);
+            var op = GetNextToken(tokens, index, opTokenTypes);
             while (op != null)
             {
-                index = index + op.Length;
-                var rightHandExpression = ParseMultiplicationAndDivision(text, index);
-                if (rightHandExpression == null)
+                index = index + 1;
+                var rightHandExpressionResult = subExpressionParser(tokens, index);
+                if (rightHandExpressionResult == null)
                 {
                     return null;
                 }
 
-                index = index + rightHandExpression.Length;
-                expression = new BinaryExpression(expression, op, rightHandExpression);
+                index = rightHandExpressionResult.NextTokenIndex;
+                expression = new BinaryExpression(expression, op, rightHandExpressionResult.Expression);
 
-                op = ParseToken(text, "+", index)
-                    ?? ParseToken(text, "-", index);
+                op = GetNextToken(tokens, index, opTokenTypes);
             }
 
-            return expression;
+            return new ParseResult(expression, index);
         }
 
-        public static Expression ParseEquality(string text, int start = 0)
+        public static ParseResult ParseRelational(ImmutableArray<Token> tokens, int start = 0)
         {
-            var index = start;
-            var expression = ParseRelational(text, index);
-            if (expression == null)
-            {
-                return null;
-            }
-
-            index = index + expression.Length;
-
-            var op = ParseToken(text, "==", index)
-                ?? ParseToken(text, "!=", index);
-            if (op != null)
-            {
-                index = index + op.Length;
-                var rightHandExpression = ParseRelational(text, index);
-                if (rightHandExpression == null)
-                {
-                    return null;
-                }
-
-                index = index + rightHandExpression.Length;
-                expression = new BinaryExpression(expression, op, rightHandExpression);
-            }
-
-            return expression;
+            return ParseLeftAssociativeBinop(tokens, start, new[] { TokenType.LessThanEqual, TokenType.GreaterThanEqual, TokenType.LessThan, TokenType.GreaterThan }, ParseAdditionAndSubtraction);
         }
 
-        public static Expression ParseRelational(string text, int start = 0)
+        public static ParseResult ParseMultiplicationAndDivision(ImmutableArray<Token> tokens, int start = 0)
         {
-            var index = start;
-            var expression = ParseAdditionAndSubtraction(text, index);
-            if (expression == null)
-            {
-                return null;
-            }
-
-            index = index + expression.Length;
-
-            var op = ParseToken(text, "<=", index)
-                ?? ParseToken(text, ">=", index)
-                ?? ParseToken(text, "<", index)
-                ?? ParseToken(text, ">", index);
-            if (op != null)
-            {
-                index = index + op.Length;
-                var rightHandExpression = ParseAdditionAndSubtraction(text, index);
-                if (rightHandExpression == null)
-                {
-                    return null;
-                }
-
-                index = index + rightHandExpression.Length;
-                expression = new BinaryExpression(expression, op, rightHandExpression);
-            }
-
-            return expression;
+            return ParseLeftAssociativeBinop(tokens, start, new[] { TokenType.Asterisk, TokenType.Slash }, ParseNegationExpression);
         }
 
-        public static Token ParseToken(string text, string expected, int start = 0)
+        public static ParseResult ParseIdentifier(ImmutableArray<Token> tokens, int start = 0) =>
+            start < tokens.Length && tokens[start].Type == TokenType.Identifier
+            ? new ParseResult(new IdentifierExpression(tokens[start]), start + 1)
+            : null;
+
+        public static ParseResult ParseAssignment(ImmutableArray<Token> tokens, int start = 0)
         {
             int index = start;
-
-            var whitespaceLength = 0;
-            var whitespace = ParseWhitespace(text, start);
-
-            whitespaceLength = whitespace.Length;
-            index = index + whitespaceLength;
-
-            int tokenStart = index;
-            while (index < text.Length
-                && (index - tokenStart) < expected.Length
-                && text[index] == expected[index - tokenStart])
+            var identifierParseResult = ParseIdentifier(tokens, index);
+            if (identifierParseResult != null)
             {
-                index++;
-            }
-
-            int tokenLength = index - tokenStart;
-            if (tokenLength == 0)
-            {
-                return null;
-            }
-
-            return new Token(whitespace, text.Substring(tokenStart, tokenLength));
-        }
-
-        public static Expression ParseMultiplicationAndDivision(string text, int start = 0)
-        {
-            var index = start;
-
-            var expression = ParseNegationExpression(text, index);
-            if (expression == null)
-            {
-                return null;
-            }
-
-            index = index + expression.Length;
-
-            var op = ParseToken(text, "*", index)
-                    ?? ParseToken(text, "/", index);
-            while (op != null)
-            {
-                index = index + op.Length;
-                var rightHandExpression = ParseNegationExpression(text, index);
-                if (rightHandExpression == null)
+                index = identifierParseResult.NextTokenIndex;
+                var equalSign = GetNextToken(tokens, identifierParseResult.NextTokenIndex, TokenType.Equal);
+                if (equalSign != null)
                 {
-                    return null;
-                }
+                    index = index + 1;
 
-                index = index + rightHandExpression.Length;
-                expression = new BinaryExpression(expression, op, rightHandExpression);
-
-                op = ParseToken(text, "*", index)
-                    ?? ParseToken(text, "/", index);
-            }
-
-            return expression;
-        }
-
-        public static IdentifierExpression ParseIdentifier(string text, int start = 0)
-        {
-            var whitespace = ParseWhitespace(text, start);
-            start = start + whitespace.Length;
-
-            int length = IdentifierLength(text, start);
-            if (length == 0)
-            {
-                return null;
-            }
-
-            var identifierToken = new Token(whitespace, text.Substring(start, length));
-
-            return new IdentifierExpression(identifierToken);
-        }
-
-        private static int IdentifierLength(string text, int start)
-        {
-            int index = start;
-            if (char.IsLetter(text[index]))
-            {
-                index++;
-            }
-            else
-            {
-                return 0;
-            }
-
-            while (index < text.Length
-                && char.IsLetterOrDigit(text[index]))
-            {
-                index++;
-            }
-
-            return index - start;
-        }
-
-        public static Expression ParseAssignment(string text, int start = 0)
-        {
-            int index = start;
-            var identifier = ParseIdentifier(text, index);
-            if (identifier != null)
-            {
-                index = index + identifier.Length;
-                var equalSign = ParseToken(text, "=", index);
-                // Make sure we didn't parse a '=' when we should have parsed a '=='.
-                if (equalSign != null
-                    && text[index + equalSign.Length] != '=')
-                {
-                    index = index + equalSign.Length;
-
-                    var subExpression = ParseExpression(text, index);
-                    if (subExpression != null)
+                    var subExpressionParseResult = ParseExpression(tokens, index);
+                    if (subExpressionParseResult != null)
                     {
-                        return new BinaryExpression(identifier, equalSign, subExpression);
+                        var expression = new BinaryExpression(identifierParseResult.Expression, equalSign, subExpressionParseResult.Expression);
+                        return new ParseResult(expression, subExpressionParseResult.NextTokenIndex);
                     }
 
                     return null;
                 }
             }
 
-            return ParseEquality(text, start);
+            return ParseEquality(tokens, start);
         }
 
-        public static Expression ParseExpression(string text, int start = 0)
+        public static ParseResult ParseExpression(ImmutableArray<Token> tokens, int start = 0)
         {
-            return ParseAssignment(text, start);
+            return ParseAssignment(tokens, start);
         }
 
-        public static BooleanLiteralExpression ParseBooleanLiteral(string text, int start = 0)
+        public static ParseResult ParseBooleanLiteral(ImmutableArray<Token> tokens, int start = 0)
         {
-            var whitespace = ParseWhitespace(text, start);
-            start = start + whitespace.Length;
-
-            int length = IdentifierLength(text, start);
-            if (length == 0)
+            if (start >= tokens.Length)
             {
                 return null;
             }
 
-            if (string.Compare(text, start, "true", 0, length) == 0
-                || string.Compare(text, start, "false", 0, length) == 0)
+            switch (tokens[start].Type)
             {
-                return new BooleanLiteralExpression(new Token(whitespace, text.Substring(start, length)));
-            }
+                case TokenType.FalseLiteral:
+                case TokenType.TrueLiteral:
+                    return new ParseResult(new BooleanLiteralExpression(tokens[start]), start + 1);
 
-            return null;
+                default:
+                    return null;
+            }
         }
     }
 }

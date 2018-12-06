@@ -5,7 +5,6 @@ namespace NCalcLib
     public class IdentifierExpression : Expression
     {
         public IdentifierExpression(Token token)
-            : base(token.Start, token.Length)
         {
             Token = token;
         }
@@ -18,7 +17,8 @@ namespace NCalcLib
             other is IdentifierExpression expression
             && Token.Equals(expression.Token);
 
-        public override int GetHashCode() =>
-            Hash(Token.GetHashCode());
+        public override int GetHashCode() => Token.GetHashCode();
+
+        public override string ToString() => Id;
     }
 }

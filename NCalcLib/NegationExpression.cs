@@ -5,7 +5,6 @@ namespace NCalcLib
     public class NegationExpression : Expression
     {
         public NegationExpression(Token operatorToken, Expression subExpression)
-            : base(operatorToken.Start, operatorToken.Length + subExpression.Length)
         {
             OperatorToken = operatorToken;
             SubExpression = subExpression;
@@ -21,7 +20,9 @@ namespace NCalcLib
             && SubExpression.Equals(expression.SubExpression);
 
         public override int GetHashCode() =>
-            Hash(OperatorToken.GetHashCode(), SubExpression.GetHashCode());
+            Hash(
+                OperatorToken.GetHashCode(),
+                SubExpression.GetHashCode());
 
         public NegationExpression WithOperator(Token newOperator)
         {

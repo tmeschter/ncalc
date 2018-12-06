@@ -5,7 +5,6 @@ namespace NCalcLib
     public sealed class BooleanLiteralExpression : Expression
     {
         public BooleanLiteralExpression(Token token)
-            : base(token.Start, token.Length)
         {
             Token = token;
         }
@@ -18,6 +17,8 @@ namespace NCalcLib
             other is BooleanLiteralExpression expression
             && Token.Equals(expression.Token);
 
-        public override int GetHashCode() => Hash(Token.GetHashCode());
+        public override int GetHashCode() => Token.GetHashCode();
+
+        public override string ToString() => Value.ToString();
     }
 }

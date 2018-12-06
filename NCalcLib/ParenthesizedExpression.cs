@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static NCalcLib.Utilities.HashCodes;
+﻿using static NCalcLib.Utilities.HashCodes;
 
 namespace NCalcLib
 {
     public class ParenthesizedExpression : Expression
     {
         public ParenthesizedExpression(Token leftParen, Expression subExpression, Token rightParen)
-            : base(leftParen.Start, leftParen.Length + subExpression.Length + rightParen.Length)
         {
             LeftParen = leftParen;
             SubExpression = subExpression;
@@ -33,6 +27,11 @@ namespace NCalcLib
                 LeftParen.GetHashCode(),
                 SubExpression.GetHashCode(),
                 RightParen.GetHashCode());
+
+        public override string ToString()
+        {
+            return $"{LeftParen}{SubExpression}{RightParen}";
+        }
 
         public ParenthesizedExpression WithLeftParen(Token newLeftParen)
         {

@@ -5,7 +5,6 @@ namespace NCalcLib
     public class BinaryExpression : Expression
     {
         public BinaryExpression(Expression left, Token op, Expression right)
-            :base(left.Start, left.Length + op.Length + right.Length)
         {
             Left = left;
             Operator = op;
@@ -28,6 +27,8 @@ namespace NCalcLib
                 Left.GetHashCode(),
                 Operator.GetHashCode(),
                 Right.GetHashCode());
+
+        public override string ToString() => $"[{Left}{Operator}{Right}]";
 
         public BinaryExpression WithLeft(Expression newLeft)
         {

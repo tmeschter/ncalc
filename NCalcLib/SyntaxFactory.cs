@@ -10,8 +10,8 @@ namespace NCalcLib
     {
         public static Whitespace Whitespace(int start, string value) => new Whitespace(start, value);
 
-        public static Token Token(int tokenStart, string text) => new Token(tokenStart, text);
-        public static Token Token(Whitespace whitespace, string text) => new Token(whitespace, text);
+        public static Token Token(int tokenStart, string text, TokenType tokenType) => new Token(tokenStart, text, tokenType);
+        public static Token Token(Whitespace whitespace, string text, TokenType tokenType) => new Token(whitespace, text, tokenType);
 
         public static BinaryExpression BinaryExpression(Expression left, Token op, Expression right) => new BinaryExpression(left, op, right);
         public static NegationExpression NegationExpression(Token operatorToken, Expression subExpression) => new NegationExpression(operatorToken, subExpression);

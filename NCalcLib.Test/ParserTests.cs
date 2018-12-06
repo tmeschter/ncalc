@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,44 +15,26 @@ namespace NCalcLib.Test
         public void Submission_NumberLiteralExpression()
         {
             var text = "5";
-            var expression = Parser.ParseSubmission(text);
+            var tokens = Lexer.LexSubmission(text);
+            var expression = Parser.ParseSubmission(tokens);
 
-            Assert.Equal(expected: 0, actual: expression.Start);
-            Assert.Equal(expected: 1, actual: expression.Length);
-            Assert.True(expression is NumberLiteralExpression);
-            Assert.Equal(expected: "5", actual: ((NumberLiteralExpression)expression).Token.Text);
-            Assert.Equal(expected: 5, actual: ((NumberLiteralExpression)expression).Value);
+            var expected = NumberLiteralExpression(Token(0, "5", TokenType.NumberLiteral));
+
+            Assert.Equal(expected, actual: expression);
         }
 
         [Fact]
-        public void NumberLiteralExpression_SingleDigit()
-        {
-            var text = "5";
-            var expression = Parser.ParseNumberLiteral(text);
-
-            AssertStartAndLength(expectedStart: 0, expectedLength: 1, node: expression);
-            Assert.Equal(expected: "5", actual: expression.Token.Text);
-            Assert.Equal(expected: 5, actual: expression.Value);
-        }
-
-        [Fact]
-        public void NumberLiteralExpression_DigitWithDecimalPoint()
-        {
-            var text = "5.";
-            var expression = Parser.ParseNumberLiteral(text);
-
-            Assert.Null(expression);
-        }
-
-        [Fact]
-        public void NumberLiteralExpression_DecimalDigits()
+        public void ParseNumberLiteral()
         {
             var text = "5.4";
-            var expression = Parser.ParseNumberLiteral(text);
+            var token = Lexer.LexNumberLiteral(text);
+            var parseResult = Parser.ParseNumberLiteral(ImmutableArray.Create(token));
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 3, node: expression);
-            Assert.Equal(expected: "5.4", actual: expression.Token.Text);
-            Assert.Equal(expected: 5.4m, actual: expression.Value);
+            var expectedExpression = NumberLiteralExpression(Token(0, "5.4", TokenType.NumberLiteral));
+            var expectedNextTokenIndex = 1;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         private static void AssertStartAndLength(int expectedStart, int expectedLength, Whitespace whitespace)
@@ -60,387 +43,357 @@ namespace NCalcLib.Test
             Assert.Equal(expected: expectedLength, actual: whitespace.Length);
         }
 
-        private static void AssertStartAndLength(int expectedStart, int expectedLength, Node node)
-        {
-            Assert.Equal(expected: expectedStart, actual: node.Start);
-            Assert.Equal(expected: expectedLength, actual: node.Length);
-        }
-
         [Fact]
-        public void NumberLiteralExpression_MultiDigit()
+        public void NegationExpression_Negative()
         {
-            var text = "25";
-            var expression = Parser.ParseNumberLiteral(text);
+            var tokens = ImmutableArray.Create(
+                Token(0, "-", TokenType.Minus),
+                Token(1, "123", TokenType.NumberLiteral));
+            var parseResult = Parser.ParseNegationExpression(tokens);
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 2, node: expression);
-            Assert.Equal(expected: 25, actual: expression.Value);
-            Assert.Equal(expected: "25", actual: expression.Token.Text);
-        }
+            var expectedExpression =
+                NegationExpression(
+                    tokens[0],
+                    NumberLiteralExpression(
+                        tokens[1]));
+            var expectedNextToken = 2;
 
-        [Fact]
-        public void NegationExpression()
-        {
-            var text = "-123";
-            var expression = (NegationExpression)Parser.ParseNegationExpression(text);
-
-            AssertStartAndLength(expectedStart: 0, expectedLength: 4, node: expression);
-            var subExpression = (NumberLiteralExpression)expression.SubExpression;
-            Assert.Equal(expected: 123, actual: subExpression.Value);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void NegationExpression_NotNegative()
         {
-            var text = "123";
-            var expression = (NumberLiteralExpression)Parser.ParseNegationExpression(text);
+            var tokens = ImmutableArray.Create(Token(0, "123", TokenType.NumberLiteral));
+            var parseResult = Parser.ParseNegationExpression(tokens);
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 3, node: expression);
-            Assert.Equal(expected: 123, actual: expression.Value);
-            Assert.Equal(expected: "123", actual: expression.Token.Text);
-        }
+            var expectedExpression = NumberLiteralExpression(tokens[0]);
+            var expectedNextTokenIndex = 1;
 
-        [Fact]
-        public void NumberLiteralExpression_LeadingWhitespace()
-        {
-            var text = "  456";
-            var expression = Parser.ParseNumberLiteral(text);
-
-            AssertStartAndLength(expectedStart: 0, expectedLength: 5, node: expression);
-            Assert.Equal(expected: 456, actual: expression.Value);
-            Assert.Equal(expected: "456", actual: expression.Token.Text);
-        }
-
-        [Fact]
-        public void Whitespace_None()
-        {
-            var text = "";
-            var whitespace = Parser.ParseWhitespace(text);
-
-            Assert.Equal(expected: 0, actual: whitespace.Start);
-            Assert.Equal(expected: 0, actual: whitespace.Length);
-            Assert.Equal(expected: "", actual: whitespace.Value);
-        }
-
-        [Fact]
-        public void Whitespace_SingleSpace()
-        {
-            var text = " ";
-            var whitespace = Parser.ParseWhitespace(text);
-
-            AssertStartAndLength(expectedStart: 0, expectedLength: 1, whitespace: whitespace);
-        }
-
-        [Fact]
-        public void Whitespace_MultipleSpaces()
-        {
-            var text = "   ";
-            var whitespace = Parser.ParseWhitespace(text);
-
-            AssertStartAndLength(expectedStart: 0, expectedLength: 3, whitespace: whitespace);
-        }
-
-        [Fact]
-        public void Addition()
-        {
-            var text = "1 + 2";
-            var expression = Parser.ParseAdditionAndSubtraction(text);
-
-            AssertStartAndLength(expectedStart: 0, expectedLength: 5, node: expression);
-        }
-
-        [Fact]
-        public void Token_Basic()
-        {
-            var text = "+";
-            var token = Parser.ParseToken(text, "+");
-
-            AssertStartAndLength(expectedStart: 0, expectedLength: 1, node: token);
-            Assert.True(token.Whitespace.IsEmpty());
-        }
-
-        [Fact]
-        public void Token_NoMatch()
-        {
-            var text = "-";
-            var token = Parser.ParseToken(text, "+");
-
-            Assert.Null(token);
-        }
-
-        [Fact]
-        public void Token_WithWhitespace()
-        {
-            var text = "  +";
-            var token = Parser.ParseToken(text, "+");
-
-            AssertStartAndLength(expectedStart: 0, expectedLength: 3, node: token);
-            AssertStartAndLength(expectedStart: 0, expectedLength: 2, whitespace: token.Whitespace);
-            Assert.Equal(expected: 2, actual: token.TokenStart);
-            Assert.Equal(expected: 1, actual: token.TokenLength);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void MultiplicationAndDivision_Single()
         {
-            var text = "4 * 5";
-            var expression = (BinaryExpression)Parser.ParseMultiplicationAndDivision(text);
+            var tokens = ImmutableArray.Create(
+                Token(0, "4", TokenType.NumberLiteral),
+                Token(1, "*", TokenType.Asterisk),
+                Token(2, "5", TokenType.NumberLiteral));
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 5, node: expression);
-            var left = (NumberLiteralExpression)expression.Left;
-            Assert.Equal(expected: 4, actual: left.Value);
-            var right = (NumberLiteralExpression)expression.Right;
-            Assert.Equal(expected: 5, actual: right.Value);
-            AssertStartAndLength(expectedStart: 1, expectedLength: 2, node: expression.Operator);
+            var parseResult = Parser.ParseMultiplicationAndDivision(tokens);
+
+            var expectedExpression =
+                BinaryExpression(
+                    NumberLiteralExpression(tokens[0]),
+                    tokens[1],
+                    NumberLiteralExpression(tokens[2]));
+            var expectedNextTokenIndex = 3;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void AdditionAndSubtraction_Single()
         {
-            var text = "2 + 3";
-            var expression = (BinaryExpression)Parser.ParseAdditionAndSubtraction(text);
+            var tokens = ImmutableArray.Create(
+                Token(0, "2", TokenType.NumberLiteral),
+                Token(1, "+", TokenType.Plus),
+                Token(2, "3", TokenType.NumberLiteral));
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 5, node: expression);
-            var left = (NumberLiteralExpression)expression.Left;
-            Assert.Equal(expected: 2, actual: left.Value);
-            var right = (NumberLiteralExpression)expression.Right;
-            Assert.Equal(expected: 3, actual: right.Value);
-            AssertStartAndLength(expectedStart: 1, expectedLength: 2, node: expression.Operator);
+            var parseResult = Parser.ParseAdditionAndSubtraction(tokens);
+
+            var expectedExpression =
+                BinaryExpression(
+                    NumberLiteralExpression(tokens[0]),
+                    tokens[1],
+                    NumberLiteralExpression(tokens[2]));
+            var expectedNextTokenIndex = 3;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void MultiplicationAndDivision_Multiple()
         {
-            var text = " 4 * 5 / 10";
-            var expression = (BinaryExpression)Parser.ParseMultiplicationAndDivision(text);
+            var tokens = ImmutableArray.Create(
+                Token(0, "4", TokenType.NumberLiteral),
+                Token(1, "*", TokenType.Asterisk),
+                Token(2, "5", TokenType.NumberLiteral),
+                Token(3, "/", TokenType.Slash),
+                Token(4, "10", TokenType.NumberLiteral));
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 11, node: expression);
+            var parseResult = Parser.ParseMultiplicationAndDivision(tokens);
+
+            var expectedExpression =
+                BinaryExpression(
+                    BinaryExpression(
+                        NumberLiteralExpression(tokens[0]),
+                        tokens[1],
+                        NumberLiteralExpression(tokens[2])),
+                    tokens[3],
+                    NumberLiteralExpression(tokens[4]));
+            var expectedNextTokenIndex = 5;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void AdditionAndSubtraction_Multiple()
         {
-            var text = " 3 * 4 / 2";
-            var expression = (BinaryExpression)Parser.ParseAdditionAndSubtraction(text);
+            var tokens = ImmutableArray.Create(
+                Token(0, "3", TokenType.NumberLiteral),
+                Token(1, "-", TokenType.Minus),
+                Token(2, "4", TokenType.NumberLiteral),
+                Token(3, "+", TokenType.Plus),
+                Token(4, "2", TokenType.NumberLiteral));
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 10, node: expression);
+            var parseResult = Parser.ParseAdditionAndSubtraction(tokens);
+
+            var expectedExpression =
+                BinaryExpression(
+                    BinaryExpression(
+                        NumberLiteralExpression(tokens[0]),
+                        tokens[1],
+                        NumberLiteralExpression(tokens[2])),
+                    tokens[3],
+                    NumberLiteralExpression(tokens[4]));
+            var expectedNextTokenIndex = 5;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void MultiplicationAndDivision_SingleExpression()
         {
-            var text = "4";
-            var expression = (NumberLiteralExpression)Parser.ParseMultiplicationAndDivision(text);
+            var tokens = ImmutableArray.Create(Token(0, "4", TokenType.NumberLiteral));
+            var parseResult = Parser.ParseMultiplicationAndDivision(tokens);
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 1, node: expression);
-            Assert.Equal(expected: 4, actual: expression.Value);
+            var expectedExpression = NumberLiteralExpression(tokens[0]);
+            var expectedNextTokenIndex = 1;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void AdditionAndSubtraction_SingleExpression()
         {
-            var text = "4";
-            var expression = (NumberLiteralExpression)Parser.ParseAdditionAndSubtraction(text);
+            var tokens = ImmutableArray.Create(Token(0, "4", TokenType.NumberLiteral));
+            var parseResult = Parser.ParseAdditionAndSubtraction(tokens);
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 1, node: expression);
-            Assert.Equal(expected: 4, actual: expression.Value);
+            var expectedExpression = NumberLiteralExpression(tokens[0]);
+            var expectedNextTokenIndex = 1;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void AdditionAndSubtraction_WithMultiplicationAndDivision()
         {
-            var text = "1 + 2 * 3 - 4 / 5";
-            var expression = (BinaryExpression)Parser.ParseAdditionAndSubtraction(text);
+            var tokens = ImmutableArray.Create(
+                Token(0, "1", TokenType.NumberLiteral),
+                Token(1, "+", TokenType.Plus),
+                Token(2, "2", TokenType.NumberLiteral),
+                Token(3, "*", TokenType.Asterisk),
+                Token(4, "3", TokenType.NumberLiteral),
+                Token(5, "-", TokenType.Minus),
+                Token(6, "4", TokenType.NumberLiteral),
+                Token(7, "/", TokenType.Slash),
+                Token(8, "5", TokenType.NumberLiteral));
+            var parseResult = Parser.ParseAdditionAndSubtraction(tokens);
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 17, node: expression);
+            var expectedExpression =
+                BinaryExpression(
+                    BinaryExpression(
+                        NumberLiteralExpression(tokens[0]),
+                        tokens[1],
+                        BinaryExpression(
+                            NumberLiteralExpression(tokens[2]),
+                            tokens[3],
+                            NumberLiteralExpression(tokens[4]))),
+                    tokens[5],
+                    BinaryExpression(
+                        NumberLiteralExpression(tokens[6]),
+                        tokens[7],
+                        NumberLiteralExpression(tokens[8])));
+            var expectedNextTokenIndex = 9;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void MultiplicationAndDivision_NegationSubExpression()
         {
-            var text = "2 * -3";
-            var expression = (BinaryExpression)Parser.ParseMultiplicationAndDivision(text);
+            var tokens = Lexer.LexSubmission("2 * -3");
+            var parseResult = Parser.ParseMultiplicationAndDivision(tokens);
 
-            AssertStartAndLength(expectedStart: 0, expectedLength: 6, node: expression);
-            var right = (NegationExpression)expression.Right;
-            AssertStartAndLength(expectedStart: 3, expectedLength: 3, node: right);
+            var expectedExpression =
+                BinaryExpression(
+                    NumberLiteralExpression(tokens[0]),
+                    tokens[1],
+                    NegationExpression(tokens[2],
+                        NumberLiteralExpression(tokens[3])));
+            var expectedNextTokenIndex = 4;
+
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void ParenthesizedExpression_NumberLiteral()
         {
             var text = "(5)";
-            var expression = (ParenthesizedExpression)Parser.ParseParenthensizedExpression(text);
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseParenthensizedExpression(tokens);
 
-            var expected = ParenthesizedExpression(
-                Token(0, "("),
-                NumberLiteralExpression(Token(1, "5")),
-                Token(2, ")"));
+            var expectedExpression =
+                ParenthesizedExpression(
+                    tokens[0],
+                    NumberLiteralExpression(tokens[1]),
+                    tokens[2]);
+            var expectedNextTokenIndex = 3;
 
-            Assert.Equal(expected, actual: expression);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void ParenthesizedExpression_BinaryExpression()
         {
             var text = "(1 + 2)";
-            var expression = (ParenthesizedExpression)Parser.ParseParenthensizedExpression(text);
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseParenthensizedExpression(tokens);
 
-            var expected = ParenthesizedExpression(
-                Token(0, "("),
-                BinaryExpression(
-                    NumberLiteralExpression(Token(1, "1")),
-                    Token(Whitespace(2, " "), "+"),
-                    NumberLiteralExpression(Token(Whitespace(4, " "), "2"))),
-                Token(6, ")"));
+            var expectedExpression =
+                ParenthesizedExpression(
+                    tokens[0],
+                    BinaryExpression(
+                        NumberLiteralExpression(tokens[1]),
+                        tokens[2],
+                        NumberLiteralExpression(tokens[3])),
+                    tokens[4]);
+            var expectedNextTokenIndex = 5;
 
-            Assert.Equal(expected, actual: expression);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void Identifier_SingleLetter()
         {
             var text = "a";
-            var expression = Parser.ParseIdentifier(text);
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseIdentifier(tokens);
 
-            var expected = IdentifierExpression(Token(0, "a"));
+            var expectedExpression = IdentifierExpression(tokens[0]);
+            var expectedNextTokenIndex = 1;
 
-            Assert.Equal(expected, actual: expression);
-        }
-
-        [Fact]
-        public void Identifier_MultipleLetters()
-        {
-            var text = "abc";
-            var expression = Parser.ParseIdentifier(text);
-
-            var expected = IdentifierExpression(Token(0, "abc"));
-
-            Assert.Equal(expected, actual: expression);
-        }
-
-        [Fact]
-        public void Identifier_LetterAndNumbers()
-        {
-            var text = "a123";
-            var expression = Parser.ParseIdentifier(text);
-
-            var expected = IdentifierExpression(Token(0, "a123"));
-
-            Assert.Equal(expected, actual: expression);
-        }
-
-        [Fact]
-        public void Identifier_StartsWithNumber()
-        {
-            var text = "1abc";
-            var expression = Parser.ParseIdentifier(text);
-
-            Assert.Null(expression);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void Assignment_Single()
         {
             var text = "a = 5";
-            var expression = Parser.ParseAssignment(text);
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseAssignment(tokens);
 
-            var expected = BinaryExpression(
-                IdentifierExpression(Token(0, "a")),
-                Token(Whitespace(1, " "), "="),
-                NumberLiteralExpression(Token(Whitespace(3, " "), "5")));
+            var expectedExpression =
+                BinaryExpression(
+                    IdentifierExpression(tokens[0]),
+                    tokens[1],
+                    NumberLiteralExpression(tokens[2]));
+            var expectedNextTokenIndex = 3;
 
-            Assert.Equal(expected, actual: expression);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void Assignment_Double()
         {
             var text = "a = b = c";
-            var expression = Parser.ParseAssignment(text);
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseAssignment(tokens);
 
-            var expected = BinaryExpression(
-                IdentifierExpression(Token(0, "a")),
-                Token(Whitespace(1, " "), "="),
+            var expectedExpression =
                 BinaryExpression(
-                    IdentifierExpression(Token(Whitespace(3, " "), "b")),
-                    Token(Whitespace(5, " "), "="),
-                    IdentifierExpression(Token(Whitespace(7, " "), "c"))));
+                    IdentifierExpression(tokens[0]),
+                    tokens[1],
+                    BinaryExpression(
+                        IdentifierExpression(tokens[2]),
+                        tokens[3],
+                        IdentifierExpression(tokens[4])));
+            var expectedNextTokenIndex = 5;
 
-            Assert.Equal(expected, actual: expression);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void BooleanLiteral_True()
         {
             var text = "true";
-            var expression = Parser.ParseBooleanLiteral(text);
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseBooleanLiteral(tokens);
 
-            var expected = BooleanLiteralExpression(Token(0, "true"));
+            var expectedExpression = BooleanLiteralExpression(tokens[0]);
+            var expectedNextTokenIndex = 1;
 
-            Assert.Equal(expected, actual: expression);
-        }
-
-        [Fact]
-        public void BooleanLiteral_False()
-        {
-            var text = "false";
-            var expression = Parser.ParseBooleanLiteral(text);
-
-            var expected = BooleanLiteralExpression(Token(0, "false"));
-
-            Assert.Equal(expected, actual: expression);
-        }
-
-        [Fact]
-        public void BooleanLiteral_NotABoolean()
-        {
-            var text = "foo";
-            var expression = Parser.ParseBooleanLiteral(text);
-
-            Assert.Null(expression);
-        }
-
-        [Fact]
-        public void BooleanLiteral_ExtraText()
-        {
-            var text = "truefoo";
-            var expression = Parser.ParseBooleanLiteral(text);
-
-            Assert.Null(expression);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void Relational_LessThan()
         {
             var text = "5 < 4";
-            var expression = Parser.ParseRelational(text);
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseRelational(tokens);
 
-            var expected = BinaryExpression(
-                NumberLiteralExpression(Token(0, "5")),
-                Token(Whitespace(1, " "), "<"),
-                NumberLiteralExpression(Token(Whitespace(3, " "), "4")));
+            var expectedExpression =
+                BinaryExpression(
+                    NumberLiteralExpression(tokens[0]),
+                    tokens[1],
+                    NumberLiteralExpression(tokens[2]));
+            var expectedNextTokenIndex = 3;
 
-            Assert.Equal(expected, actual: expression);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
         [Fact]
         public void Assignment_Parenthesized()
         {
             var text = "a = (b = 2)";
-            var expression = Parser.ParseAssignment(text);
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult =  Parser.ParseAssignment(tokens);
 
-            var expected = BinaryExpression(
-                IdentifierExpression(Token(0, "a")),
-                Token(Whitespace(1, " "), "="),
-                ParenthesizedExpression(
-                    Token(Whitespace(3, " "), "("),
-                    BinaryExpression(
-                        IdentifierExpression(Token(5, "b")),
-                        Token(Whitespace(6, " "), "="),
-                        NumberLiteralExpression(Token(Whitespace(8, " "), "2"))),
-                    Token(10, ")")));
+            var expectedExpression =
+                BinaryExpression(
+                    IdentifierExpression(tokens[0]),
+                    tokens[1],
+                    ParenthesizedExpression(
+                        tokens[2],
+                        BinaryExpression(
+                            IdentifierExpression(tokens[3]),
+                            tokens[4],
+                            NumberLiteralExpression(tokens[5])),
+                        tokens[6]));
+            var expectedNextTokenIndex = 7;
 
-            Assert.Equal(expected, actual: expression);
+            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
     }
 }

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NCalcLib.Utilities
+﻿namespace NCalcLib.Utilities
 {
     internal static class HashCodes
     {
@@ -29,6 +23,27 @@ namespace NCalcLib.Utilities
             hash = Mutate(hash, input1);
             hash = Mutate(hash, input2);
             hash = Mutate(hash, input3);
+            return hash;
+        }
+
+        public static int Hash(int input1, int input2, int input3, int input4)
+        {
+            int hash = 17;
+            hash = Mutate(hash, input1);
+            hash = Mutate(hash, input2);
+            hash = Mutate(hash, input3);
+            hash = Mutate(hash, input4);
+            return hash;
+        }
+
+        public static int Hash(int input1, int input2, int input3, int input4, int input5)
+        {
+            int hash = 17;
+            hash = Mutate(hash, input1);
+            hash = Mutate(hash, input2);
+            hash = Mutate(hash, input3);
+            hash = Mutate(hash, input4);
+            hash = Mutate(hash, input5);
             return hash;
         }
 
