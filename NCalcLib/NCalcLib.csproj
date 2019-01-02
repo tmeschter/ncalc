@@ -61,6 +61,7 @@
     <Compile Include="SyntaxFactory.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="Transformer.cs" />
+    <Compile Include="TransformResult.cs" />
     <Compile Include="Utilities\HashCodes.cs" />
     <Compile Include="Whitespace.cs" />
   </ItemGroup>
