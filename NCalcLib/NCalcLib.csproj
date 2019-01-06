@@ -47,6 +47,7 @@
     <Compile Include="Globals.cs" />
     <Compile Include="IdentifierExpression.cs" />
     <Compile Include="Lexer.cs" />
+    <Compile Include="LinqExpressionExtensions.cs" />
     <Compile Include="NegationExpression.cs" />
     <Compile Include="Expression.cs" />
     <Compile Include="NumberLiteralExpression.cs" />
