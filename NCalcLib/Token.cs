@@ -22,6 +22,9 @@ namespace NCalcLib
         Equal,
         BangEqual,
         Identifier,
+        AsKeyword,
+        BooleanKeyword,
+        NumberKeyword,
         Unknown,
         EndOfInput
     }

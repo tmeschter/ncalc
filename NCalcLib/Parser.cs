@@ -185,11 +185,11 @@ namespace NCalcLib
         public static ParseResult ParseAssignment(ImmutableArray<Token> tokens, int start = 0)
         {
             int index = start;
-            var identifierParseResult = ParseIdentifier(tokens, index);
-            if (identifierParseResult != null)
+            var leftHandSideResult = ParseDeclarationExpression(tokens, index) ?? ParseIdentifier(tokens, index);
+            if (leftHandSideResult != null)
             {
-                index = identifierParseResult.NextTokenIndex;
-                var equalSign = GetNextToken(tokens, identifierParseResult.NextTokenIndex, TokenType.Equal);
+                index = leftHandSideResult.NextTokenIndex;
+                var equalSign = GetNextToken(tokens, leftHandSideResult.NextTokenIndex, TokenType.Equal);
                 if (equalSign != null)
                 {
                     index = index + 1;
@@ -197,7 +197,7 @@ namespace NCalcLib
                     var subExpressionParseResult = ParseExpression(tokens, index);
                     if (subExpressionParseResult != null)
                     {
-                        var expression = new BinaryExpression(identifierParseResult.Expression, equalSign, subExpressionParseResult.Expression);
+                        var expression = new BinaryExpression(leftHandSideResult.Expression, equalSign, subExpressionParseResult.Expression);
                         return new ParseResult(expression, subExpressionParseResult.NextTokenIndex);
                     }
 
@@ -229,6 +229,25 @@ namespace NCalcLib
                 default:
                     return null;
             }
+        }
+
+        public static ParseResult ParseDeclarationExpression(ImmutableArray<Token> tokens, int start = 0)
+        {
+            if (start + 2 < tokens.Length
+                && tokens[start].Type == TokenType.Identifier
+                && tokens[start + 1].Type == TokenType.AsKeyword
+                && IsTypeToken(tokens[start + 2]))
+            {
+                return new ParseResult(new DeclarationExpression(tokens[start], tokens[start + 1], tokens[start + 2]), start + 3);
+            }
+
+            return null;
+        }
+
+        private static bool IsTypeToken(Token token)
+        {
+            return token.Type == TokenType.BooleanKeyword
+                || token.Type == TokenType.NumberKeyword;
         }
     }
 }

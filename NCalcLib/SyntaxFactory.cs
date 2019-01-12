@@ -19,5 +19,6 @@ namespace NCalcLib
         public static BooleanLiteralExpression BooleanLiteralExpression(Token token) => new BooleanLiteralExpression(token);
         public static ParenthesizedExpression ParenthesizedExpression(Token leftParen, Expression subExpression, Token rightParen) => new ParenthesizedExpression(leftParen, subExpression, rightParen);
         public static IdentifierExpression IdentifierExpression(Token token) => new IdentifierExpression(token);
+        public static DeclarationExpression Declaration(Token identifierToken, Token asToken, Token typeToken) => new DeclarationExpression(identifierToken, asToken, typeToken);
     }
 }

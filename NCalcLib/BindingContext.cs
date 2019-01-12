@@ -13,19 +13,12 @@ namespace NCalcLib
 
         private readonly ImmutableDictionary<string, Type> _map;
 
-        private BindingContext(ImmutableDictionary<string, Type> map)
-        {
-            _map = map;
-        }
+        private BindingContext(ImmutableDictionary<string, Type> map) => _map = map;
 
-        public Type GetVariableType(string variable)
-        {
-            return _map[variable];
-        }
+        public Type GetVariableType(string variable) => _map[variable];
 
-        public BindingContext SetVariableType(string variable, Type type)
-        {
-            return new BindingContext(_map.SetItem(variable, type));
-        }
+        public bool TryGetVariableType(string variable, out Type variableType) => _map.TryGetValue(variable, out variableType);
+
+        public BindingContext SetVariableType(string variable, Type type) => new BindingContext(_map.SetItem(variable, type));
     }
 }

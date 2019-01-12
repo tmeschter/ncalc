@@ -27,11 +27,22 @@ namespace ncalc
                     continue;
                 }
 
-                (var newBindingContext, var expression) = Transformer.Transform(globalBindingContext, expressionSyntax);
+                (var newBindingContext, var expression, var errors) = Transformer.Transform(globalBindingContext, expressionSyntax);
+                if (errors.Count > 0)
+                {
+                    foreach (var error in errors)
+                    {
+                        Console.WriteLine(error);
+                    }
+
+                    continue;
+                }
+
                 if (expression == null)
                 {
                     continue;
                 }
+
                 expression = LinqExpression.Convert(expression, typeof(object));
 
                 globalBindingContext = newBindingContext;

@@ -43,9 +43,11 @@
     <Compile Include="BinaryExpression.cs" />
     <Compile Include="BindingContext.cs" />
     <Compile Include="BooleanLiteralExpression.cs" />
+    <Compile Include="DeclarationExpression.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="IdentifierExpression.cs" />
     <Compile Include="Lexer.cs" />
+    <Compile Include="LinqExpressionExtensions.cs" />
     <Compile Include="NegationExpression.cs" />
     <Compile Include="Expression.cs" />
     <Compile Include="NumberLiteralExpression.cs" />
@@ -60,6 +62,7 @@
     <Compile Include="SyntaxFactory.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="Transformer.cs" />
+    <Compile Include="TransformResult.cs" />
     <Compile Include="Utilities\HashCodes.cs" />
     <Compile Include="Whitespace.cs" />
   </ItemGroup>

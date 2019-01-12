@@ -112,6 +112,66 @@ namespace NCalcLib.Test
             Assert.Equal(TokenType.Identifier, token.Type);
         }
 
+        [Theory]
+        [InlineData("as", 0, 2, 0, 2)]
+        [InlineData("  as", 0, 4, 2, 2)]
+        [InlineData(" as ", 0, 3, 1, 2)]
+        public void AsKeyword_Lexes(string text, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
+        {
+            var token = Lexer.LexIdentifierOrKeyword(text, 0);
+
+            AssertStartLengthAndType(token, TokenType.AsKeyword, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
+        }
+
+        [Theory]
+        [InlineData("asb")]
+        public void AsKeyword_DoesNotLex(string text)
+        {
+            var token = Lexer.LexIdentifierOrKeyword(text, 0);
+
+            Assert.Equal(TokenType.Identifier, token.Type);
+        }
+
+        [Theory]
+        [InlineData("boolean", 0, 7, 0, 7)]
+        [InlineData("  boolean", 0, 9, 2, 7)]
+        [InlineData(" boolean ", 0, 8, 1, 7)]
+        public void BooleanKeyword_Lexes(string text, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
+        {
+            var token = Lexer.LexIdentifierOrKeyword(text, 0);
+
+            AssertStartLengthAndType(token, TokenType.BooleanKeyword, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
+        }
+
+        [Theory]
+        [InlineData("booleanb")]
+        public void BooleanKeyword_DoesNotLex(string text)
+        {
+            var token = Lexer.LexIdentifierOrKeyword(text, 0);
+
+            Assert.Equal(TokenType.Identifier, token.Type);
+        }
+
+        [Theory]
+        [InlineData("number", 0, 6, 0, 6)]
+        [InlineData("  number", 0, 8, 2, 6)]
+        [InlineData(" number ", 0, 7, 1, 6)]
+        public void NumberKeyword_Lexes(string text, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
+        {
+            var token = Lexer.LexIdentifierOrKeyword(text, 0);
+
+            AssertStartLengthAndType(token, TokenType.NumberKeyword, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
+        }
+
+        [Theory]
+        [InlineData("numbera")]
+        public void NumberKeyword_DoesNotLex(string text)
+        {
+            var token = Lexer.LexIdentifierOrKeyword(text, 0);
+
+            Assert.Equal(TokenType.Identifier, token.Type);
+        }
+
         private static void AssertStartLengthAndType(Token token, TokenType expectedType, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             Assert.Equal(expectedType, actual: token.Type);
