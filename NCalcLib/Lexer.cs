@@ -185,7 +185,7 @@ namespace NCalcLib
                 }
 
                 tokens.Add(token);
-                index = index + token.Length;
+                index = index + token.LengthWithWhitespace;
             }
 
             return tokens.ToImmutable();

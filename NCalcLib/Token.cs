@@ -49,8 +49,8 @@ namespace NCalcLib
         public int TokenStart => Whitespace.Start + Whitespace.Length;
         public int TokenLength => Text.Length;
 
-        public int Start => Whitespace.Start;
-        public int Length => Whitespace.Length + Text.Length;
+        public int StartWithWhitespace => Whitespace.Start;
+        public int LengthWithWhitespace => Whitespace.Length + Text.Length;
 
         public bool Equals(Token other) =>
             other != null
