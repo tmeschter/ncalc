@@ -172,13 +172,13 @@ namespace NCalcLib.Test
             Assert.Equal(TokenType.Identifier, token.Type);
         }
 
-        private static void AssertStartLengthAndType(Token token, TokenType expectedType, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedTokenStart, int expectedTokenLength)
+        private static void AssertStartLengthAndType(Token token, TokenType expectedType, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
         {
             Assert.Equal(expectedType, actual: token.Type);
             Assert.Equal(expectedStartWithWhitespace, actual: token.StartWithWhitespace);
             Assert.Equal(expectedLengthWithWhitespace, actual: token.LengthWithWhitespace);
-            Assert.Equal(expectedTokenStart, actual: token.TokenStart);
-            Assert.Equal(expectedTokenLength, actual: token.TokenLength);
+            Assert.Equal(expectedStart, actual: token.Start);
+            Assert.Equal(expectedLength, actual: token.Length);
         }
 
         private static void AssertStartAndLength(Whitespace whitespace, int expectedStart, int expectedLength)
@@ -195,8 +195,8 @@ namespace NCalcLib.Test
 
         private static void AssertTokenStartAndLength(Token token, int expectedStart, int expectedLength)
         {
-            Assert.Equal(expectedStart, actual: token.TokenStart);
-            Assert.Equal(expectedLength, actual: token.TokenLength);
+            Assert.Equal(expectedStart, actual: token.Start);
+            Assert.Equal(expectedLength, actual: token.Length);
         }
     }
 }

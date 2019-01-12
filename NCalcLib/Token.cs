@@ -31,8 +31,8 @@ namespace NCalcLib
 
     public sealed class Token : IEquatable<Token>
     {
-        public Token(int tokenStart, string text, TokenType type)
-            : this(new Whitespace(tokenStart, ""), text, type)
+        public Token(int start, string text, TokenType type)
+            : this(new Whitespace(start, ""), text, type)
         {
         }
 
@@ -46,8 +46,8 @@ namespace NCalcLib
         public Whitespace Whitespace { get; }
         public string Text { get; }
         public TokenType Type { get; }
-        public int TokenStart => Whitespace.Start + Whitespace.Length;
-        public int TokenLength => Text.Length;
+        public int Start => Whitespace.Start + Whitespace.Length;
+        public int Length => Text.Length;
 
         public int StartWithWhitespace => Whitespace.Start;
         public int LengthWithWhitespace => Whitespace.Length + Text.Length;
@@ -55,7 +55,7 @@ namespace NCalcLib
         public bool Equals(Token other) =>
             other != null
             && Whitespace.Equals(other.Whitespace)
-            && TokenStart == other.TokenStart
+            && Start == other.Start
             && Text == other.Text
             && Type == other.Type;
 
@@ -64,7 +64,7 @@ namespace NCalcLib
         public override int GetHashCode() =>
             Hash(
                 Whitespace.GetHashCode(),
-                TokenStart.GetHashCode(),
+                Start.GetHashCode(),
                 Text.GetHashCode(),
                 Type.GetHashCode());
 
