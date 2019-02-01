@@ -28,8 +28,8 @@ namespace NCalcLib
                 Operator.GetHashCode(),
                 Right.GetHashCode());
 
-        public override int Length() => Left.Length() + Operator.Length + Right.LengthWithWhitespace();
-        public override int LengthWithWhitespace() => Left.LengthWithWhitespace() + Operator.Length + Right.LengthWithWhitespace();
+        public override int Length() => Left.Length() + Operator.LengthWithWhitespace + Right.LengthWithWhitespace();
+        public override int LengthWithWhitespace() => Left.LengthWithWhitespace() + Operator.LengthWithWhitespace + Right.LengthWithWhitespace();
         public override int Start() => Left.Start();
         public override int StartWithWhitespace() => Left.StartWithWhitespace();
 

@@ -266,6 +266,19 @@ namespace NCalcLib.Test
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
+        [Theory]
+        [InlineData("(5)", 0, 3)]
+        [InlineData("(5 + 4)", 0, 7)]
+        public void ParenthesizedExpression_StartAndLength(string text, int expectedStart, int expectedLength)
+        {
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseParenthensizedExpression(tokens);
+            var expression = (ParenthesizedExpression)parseResult.Expression;
+
+            Assert.Equal(expectedStart, expression.Start());
+            Assert.Equal(expectedLength, expression.Length());
+        }
+
         [Fact]
         public void ParenthesizedExpression_BinaryExpression()
         {
