@@ -22,7 +22,7 @@ namespace NCalcLib
 
                 case NegationExpression negation:
                     LinqExpression subexpression;
-                    ImmutableList<string> errors;
+                    ImmutableList<Diagnostic> errors;
                     (bindingContext, subexpression, errors) = Transform(bindingContext, negation.SubExpression);
                     return new TransformResult(bindingContext, LinqExpression.Negate(subexpression), errors);
 
@@ -41,7 +41,7 @@ namespace NCalcLib
         {
             if (!bindingContext.TryGetVariableType(identifier.Id, out var variableType))
             {
-                var error = $"Variable '{identifier.Id}' has not been declared.";
+                var error = new Diagnostic(identifier.Start(), identifier.Length(), $"Variable '{identifier.Id}' has not been declared.");
                 return new TransformResult(bindingContext, LinqExpression.Constant(0m), ImmutableList.Create(error));
             }
             else
@@ -75,31 +75,73 @@ namespace NCalcLib
                 variableType);
         }
 
-        private static TransformResult TransformBinop(BindingContext bindingContext, BinaryExpression binop)
+        private static TransformResult TransformNumericBinop(
+            BindingContext bindingContext,
+            BinaryExpression binop,
+            Func<LinqExpression, LinqExpression, LinqExpression> createLinqBinop,
+            Func<BinaryExpression, LinqExpression, LinqExpression, ImmutableList<Diagnostic>> typeCheckBinop)
         {
-            TransformResult transformStandardBinop(Func<LinqExpression, LinqExpression, LinqExpression> createBinop, Func<LinqExpression, LinqExpression, ImmutableList<string>> typeCheck)
+            LinqExpression left;
+            LinqExpression right;
+            ImmutableList<Diagnostic> leftErrors;
+            ImmutableList<Diagnostic> rightErrors;
+
+            (bindingContext, left, leftErrors) = Transform(bindingContext, binop.Left);
+            (bindingContext, right, rightErrors) = Transform(bindingContext, binop.Right);
+            ImmutableList<Diagnostic> typeCheckErrors = typeCheckBinop(binop, left, right);
+
+            var linqBinop = typeCheckErrors.Count == 0
+                ? createLinqBinop(left, right)
+                : LinqExpression.Default(typeof(decimal));
+
+            return new TransformResult(bindingContext, linqBinop, leftErrors.AddRange(rightErrors).AddRange(typeCheckErrors));
+        }
+
+        private static ImmutableList<Diagnostic> TypeCheckNumericBinop(BinaryExpression binop, LinqExpression left, LinqExpression right)
+        {
+            var typeCheckErrors = ImmutableList<Diagnostic>.Empty;
+            var errorString = "Expected type '{0}' but found '{1}' instead.";
+
+            if (!left.HasDecimalType())
             {
-                LinqExpression left;
-                LinqExpression right;
-                ImmutableList<string> leftErrors;
-                ImmutableList<string> rightErrors;
-
-                (bindingContext, left, leftErrors) = Transform(bindingContext, binop.Left);
-                (bindingContext, right, rightErrors) = Transform(bindingContext, binop.Right);
-                var typeCheckErrors = typeCheck(left, right);
-
-                var linqBinop = typeCheckErrors.Count == 0
-                    ? createBinop(left, right)
-                    : LinqExpression.Default(left.Type);
-
-                return new TransformResult(bindingContext, linqBinop, leftErrors.AddRange(rightErrors).AddRange(typeCheckErrors));
+                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Left.Start(), binop.Left.Length(), string.Format(errorString, typeof(decimal), left.Type)));
             }
 
-            (BindingContext, ImmutableList<string> errors) handleDeclaration(DeclarationExpression declaration)
+            if (!right.HasDecimalType())
+            {
+                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Right.Start(), binop.Right.Length(), string.Format(errorString, typeof(decimal), right.Type)));
+            }
+
+            return typeCheckErrors;
+        }
+
+        private static ImmutableList<Diagnostic> TypeCheckMatchingNumericOrBooleanTypes(BinaryExpression binop, LinqExpression left, LinqExpression right)
+        {
+            var typeCheckErrors = ImmutableList<Diagnostic>.Empty;
+            var errorString = "Expected type '{0}' but found '{1}' instead.";
+
+            if (left.HasBooleanType() || left.HasDecimalType())
+            {
+                if (right.Type != left.Type)
+                {
+                    typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Right.Start(), binop.Right.Length(), string.Format(errorString, left.Type, right.Type)));
+                }
+            }
+            else
+            {
+                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Left.Start(), binop.Left.Length(), $"Expected type '{typeof(decimal)}' or '{typeof(bool)}' but found '{left.Type}' instead."));
+            }
+
+            return typeCheckErrors;
+        }
+
+        private static TransformResult TransformBinop(BindingContext bindingContext, BinaryExpression binop)
+        {
+            (BindingContext, ImmutableList<Diagnostic> errors) handleDeclaration(DeclarationExpression declaration)
             {
                 var id = declaration.Identifier.Text;
                 Type type;
-                var errors = ImmutableList<string>.Empty;
+                var errors = ImmutableList<Diagnostic>.Empty;
                 switch (declaration.Type.Type)
                 {
                     case TokenType.BooleanKeyword:
@@ -110,7 +152,7 @@ namespace NCalcLib
                         break;
                     default:
                         type = typeof(decimal);
-                        errors = errors.Add($"Unknown type '{declaration.Type.Text}'.");
+                        errors = errors.Add(new Diagnostic(declaration.Type.Start, declaration.Type.Length, $"Unknown type '{declaration.Type.Text}'."));
                         break;
 
                 }
@@ -119,98 +161,42 @@ namespace NCalcLib
 
             TransformResult transformAssignment()
             {
-                string variableName = string.Empty;
-                var leftErrors = ImmutableList<string>.Empty;
+                Token variableNameToken = null;
+                var leftErrors = ImmutableList<Diagnostic>.Empty;
                 if (binop.Left is DeclarationExpression declaration)
                 {
                     (bindingContext, leftErrors) = handleDeclaration(declaration);
-                    variableName = declaration.Identifier.Text;
+                    variableNameToken = declaration.Identifier;
                 }
                 else if (binop.Left is IdentifierExpression identifier)
                 {
-                    variableName = identifier.Id;
+                    variableNameToken = identifier.Token;
                 }
 
-                if (!bindingContext.TryGetVariableType(variableName, out var _))
+                if (!bindingContext.TryGetVariableType(variableNameToken.Text, out var _))
                 {
-                    leftErrors = leftErrors.Add($"Variable '{variableName}' has not been declared.");
+                    leftErrors = leftErrors.Add(new Diagnostic(variableNameToken.Start, variableNameToken.Length, $"Variable '{variableNameToken.Text}' has not been declared."));
                 }
 
                 LinqExpression right;
-                ImmutableList<string> rightErrors;
+                ImmutableList<Diagnostic> rightErrors;
                 (bindingContext, right, rightErrors) = Transform(bindingContext, binop.Right);
 
-                return new TransformResult(bindingContext, SetGlobalVariableExpression(variableName, right), leftErrors.AddRange(rightErrors));
-            }
-
-            ImmutableList<string> verifyNumericTypes(LinqExpression left, LinqExpression right)
-            {
-                var errors = ImmutableList<string>.Empty;
-                var errorString = "Expected type '{0}' but found '{1}' instead.";
-
-                if (!left.HasDecimalType())
-                {
-                    errors = errors.Add(string.Format(errorString, typeof(decimal), left.Type));
-                }
-
-                if (!right.HasDecimalType())
-                {
-                    errors = errors.Add(string.Format(errorString, typeof(decimal), right.Type));
-                }
-
-                return errors;
-            }
-
-            ImmutableList<string> verifyBooleanTypes(LinqExpression left, LinqExpression right)
-            {
-                var errors = ImmutableList<string>.Empty;
-                var errorString = "Expected type '{0}' but found '{1}' instead.";
-
-                if (!left.HasBooleanType())
-                {
-                    errors = errors.Add(string.Format(errorString, typeof(bool), left.Type));
-                }
-
-                if (!right.HasBooleanType())
-                {
-                    errors = errors.Add(string.Format(errorString, typeof(bool), right.Type));
-                }
-
-                return errors;
-            }
-
-            ImmutableList<string> verifyMatchingBooleanOrNumbericTypes(LinqExpression left, LinqExpression right)
-            {
-                var errors = ImmutableList<string>.Empty;
-                var errorString = "Expected type '{0}' but found '{1}' instead.";
-
-                if (left.HasBooleanType() || left.HasDecimalType())
-                {
-                    if (right.Type != left.Type)
-                    {
-                        errors = errors.Add(string.Format(errorString, left.Type, right.Type));
-                    }
-                }
-                else
-                {
-                    errors = errors.Add($"Expected type '{typeof(decimal)}' or '{typeof(bool)}' but found '{left.Type}' instead.");
-                }
-
-                return errors;
+                return new TransformResult(bindingContext, SetGlobalVariableExpression(variableNameToken.Text, right), leftErrors.AddRange(rightErrors));
             }
 
             switch (binop.Operator.Text)
             {
-                case "+": return transformStandardBinop(LinqExpression.Add, verifyNumericTypes);
-                case "-": return transformStandardBinop(LinqExpression.Subtract, verifyNumericTypes);
-                case "*": return transformStandardBinop(LinqExpression.Multiply, verifyNumericTypes);
-                case "/": return transformStandardBinop(LinqExpression.Divide, verifyNumericTypes);
-                case "<": return transformStandardBinop(LinqExpression.LessThan, verifyNumericTypes);
-                case "<=": return transformStandardBinop(LinqExpression.LessThanOrEqual, verifyNumericTypes);
-                case ">": return transformStandardBinop(LinqExpression.GreaterThan, verifyNumericTypes);
-                case ">=": return transformStandardBinop(LinqExpression.GreaterThanOrEqual, verifyNumericTypes);
-                case "!=": return transformStandardBinop(LinqExpression.NotEqual, verifyMatchingBooleanOrNumbericTypes);
-                case "==": return transformStandardBinop(LinqExpression.Equal, verifyMatchingBooleanOrNumbericTypes);
+                case "+": return TransformNumericBinop(bindingContext, binop, LinqExpression.Add, TypeCheckNumericBinop);
+                case "-": return TransformNumericBinop(bindingContext, binop, LinqExpression.Subtract, TypeCheckNumericBinop);
+                case "*": return TransformNumericBinop(bindingContext, binop, LinqExpression.Multiply, TypeCheckNumericBinop);
+                case "/": return TransformNumericBinop(bindingContext, binop, LinqExpression.Divide, TypeCheckNumericBinop);
+                case "<": return TransformNumericBinop(bindingContext, binop, LinqExpression.LessThan, TypeCheckNumericBinop);
+                case "<=": return TransformNumericBinop(bindingContext, binop, LinqExpression.LessThanOrEqual, TypeCheckNumericBinop);
+                case ">": return TransformNumericBinop(bindingContext, binop, LinqExpression.GreaterThan, TypeCheckNumericBinop);
+                case ">=": return TransformNumericBinop(bindingContext, binop, LinqExpression.GreaterThanOrEqual, TypeCheckNumericBinop);
+                case "!=": return TransformNumericBinop(bindingContext, binop, LinqExpression.NotEqual, TypeCheckMatchingNumericOrBooleanTypes);
+                case "==": return TransformNumericBinop(bindingContext, binop, LinqExpression.Equal, TypeCheckMatchingNumericOrBooleanTypes);
                 case "=": return transformAssignment();
                 default: throw new InvalidOperationException();
             }
