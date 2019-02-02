@@ -5,7 +5,7 @@ namespace NCalcLib
 {
     public sealed class TransformResult
     {
-        public TransformResult(BindingContext bindingContext, LinqExpression expression, ImmutableList<string> errors)
+        public TransformResult(BindingContext bindingContext, LinqExpression expression, ImmutableList<Diagnostic> errors)
         {
             BindingContext = bindingContext;
             Expression = expression;
@@ -13,15 +13,15 @@ namespace NCalcLib
         }
 
         public TransformResult(BindingContext bindingContext, LinqExpression expression)
-            : this(bindingContext, expression, ImmutableList<string>.Empty)
+            : this(bindingContext, expression, ImmutableList<Diagnostic>.Empty)
         {
         }
 
         public BindingContext BindingContext { get; }
         public LinqExpression Expression { get; }
-        public ImmutableList<string> Errors { get; }
+        public ImmutableList<Diagnostic> Errors { get; }
 
-        public void Deconstruct(out BindingContext bindingContext, out LinqExpression expression, out ImmutableList<string> errors)
+        public void Deconstruct(out BindingContext bindingContext, out LinqExpression expression, out ImmutableList<Diagnostic> errors)
         {
             bindingContext = BindingContext;
             expression = Expression;

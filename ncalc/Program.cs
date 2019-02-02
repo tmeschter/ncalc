@@ -32,7 +32,9 @@ namespace ncalc
                 {
                     foreach (var error in errors)
                     {
-                        Console.WriteLine(error);
+                        Console.WriteLine(error.Message);
+                        Console.WriteLine($"  {input}");
+                        Console.WriteLine($"  {new string(' ', error.Start)}{new string('^', error.Length)}");
                     }
 
                     continue;
