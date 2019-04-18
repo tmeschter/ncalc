@@ -25,11 +25,11 @@ namespace NCalcLib.Test
         [InlineData("5.4", 0, 3, 0, 3)]
         [InlineData("25", 0, 2, 0, 2)]
         [InlineData("  456", 0, 5, 2, 3)]
-        public void NumberLiteral_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        public void NumberLiteral_Lexes(string text, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             var token = Lexer.LexNumberLiteral(text);
 
-            AssertStartLengthAndType(token, TokenType.NumberLiteral, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            AssertStartLengthAndType(token, TokenType.NumberLiteral, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
         }
 
         [Theory]
@@ -56,11 +56,11 @@ namespace NCalcLib.Test
         [InlineData("foo", 0, 3, 0, 3)]
         [InlineData("  foo", 0, 5, 2, 3)]
         [InlineData("foo1bar", 0, 7, 0, 7)]
-        public void Identifier_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        public void Identifier_Lexes(string text, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             var identifierToken = Lexer.LexIdentifier(text);
 
-            AssertStartLengthAndType(identifierToken, TokenType.Identifier, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            AssertStartLengthAndType(identifierToken, TokenType.Identifier, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
         }
 
         [Theory]
@@ -76,11 +76,11 @@ namespace NCalcLib.Test
         [InlineData("+", "+", TokenType.Plus, 0, 1, 0, 1)]
         [InlineData(" +", "+", TokenType.Plus, 0, 2, 1, 1)]
         [InlineData(" + ", "+", TokenType.Plus, 0, 2, 1, 1)]
-        public void SimpleToken_Lexes(string text, string tokenText, TokenType expectedType, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        public void SimpleToken_Lexes(string text, string tokenText, TokenType expectedType, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             var token = Lexer.LexSimpleToken(text, 0, tokenText, expectedType);
 
-            AssertStartLengthAndType(token, expectedType, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            AssertStartLengthAndType(token, expectedType, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
         }
 
         [Theory]
@@ -96,11 +96,11 @@ namespace NCalcLib.Test
         [InlineData("true", TokenType.TrueLiteral, 0, 4, 0, 4)]
         [InlineData("false", TokenType.FalseLiteral, 0, 5, 0, 5)]
         [InlineData("  true", TokenType.TrueLiteral, 0, 6, 2, 4)]
-        public void BooleanLiteral_Lexes(string text, TokenType expectedType, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        public void BooleanLiteral_Lexes(string text, TokenType expectedType, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             var token = Lexer.LexIdentifierOrKeyword(text, 0);
 
-            AssertStartLengthAndType(token, expectedType, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            AssertStartLengthAndType(token, expectedType, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
         }
 
         [Theory]
@@ -116,11 +116,11 @@ namespace NCalcLib.Test
         [InlineData("as", 0, 2, 0, 2)]
         [InlineData("  as", 0, 4, 2, 2)]
         [InlineData(" as ", 0, 3, 1, 2)]
-        public void AsKeyword_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        public void AsKeyword_Lexes(string text, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             var token = Lexer.LexIdentifierOrKeyword(text, 0);
 
-            AssertStartLengthAndType(token, TokenType.AsKeyword, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            AssertStartLengthAndType(token, TokenType.AsKeyword, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
         }
 
         [Theory]
@@ -136,11 +136,11 @@ namespace NCalcLib.Test
         [InlineData("boolean", 0, 7, 0, 7)]
         [InlineData("  boolean", 0, 9, 2, 7)]
         [InlineData(" boolean ", 0, 8, 1, 7)]
-        public void BooleanKeyword_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        public void BooleanKeyword_Lexes(string text, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             var token = Lexer.LexIdentifierOrKeyword(text, 0);
 
-            AssertStartLengthAndType(token, TokenType.BooleanKeyword, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            AssertStartLengthAndType(token, TokenType.BooleanKeyword, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
         }
 
         [Theory]
@@ -156,11 +156,11 @@ namespace NCalcLib.Test
         [InlineData("number", 0, 6, 0, 6)]
         [InlineData("  number", 0, 8, 2, 6)]
         [InlineData(" number ", 0, 7, 1, 6)]
-        public void NumberKeyword_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        public void NumberKeyword_Lexes(string text, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             var token = Lexer.LexIdentifierOrKeyword(text, 0);
 
-            AssertStartLengthAndType(token, TokenType.NumberKeyword, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            AssertStartLengthAndType(token, TokenType.NumberKeyword, expectedStart, expectedLength, expectedTokenStart, expectedTokenLength);
         }
 
         [Theory]
@@ -172,13 +172,13 @@ namespace NCalcLib.Test
             Assert.Equal(TokenType.Identifier, token.Type);
         }
 
-        private static void AssertStartLengthAndType(Token token, TokenType expectedType, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        private static void AssertStartLengthAndType(Token token, TokenType expectedType, int expectedStart, int expectedLength, int expectedTokenStart, int expectedTokenLength)
         {
             Assert.Equal(expectedType, actual: token.Type);
-            Assert.Equal(expectedStartWithWhitespace, actual: token.StartWithWhitespace);
-            Assert.Equal(expectedLengthWithWhitespace, actual: token.LengthWithWhitespace);
             Assert.Equal(expectedStart, actual: token.Start);
             Assert.Equal(expectedLength, actual: token.Length);
+            Assert.Equal(expectedTokenStart, actual: token.TokenStart);
+            Assert.Equal(expectedTokenLength, actual: token.TokenLength);
         }
 
         private static void AssertStartAndLength(Whitespace whitespace, int expectedStart, int expectedLength)
@@ -187,16 +187,16 @@ namespace NCalcLib.Test
             Assert.Equal(expected: expectedLength, actual: whitespace.Length);
         }
 
-        private static void AssertStartAndLength(Token token, int expectedStartWithWhitepsace, int expectedLengthWithWhitespace)
+        private static void AssertStartAndLength(Token token, int expectedStart, int expectedLength)
         {
-            Assert.Equal(expected: expectedStartWithWhitepsace, actual: token.StartWithWhitespace);
-            Assert.Equal(expected: expectedLengthWithWhitespace, actual: token.LengthWithWhitespace);
+            Assert.Equal(expected: expectedStart, actual: token.Start);
+            Assert.Equal(expected: expectedLength, actual: token.Length);
         }
 
         private static void AssertTokenStartAndLength(Token token, int expectedStart, int expectedLength)
         {
-            Assert.Equal(expectedStart, actual: token.Start);
-            Assert.Equal(expectedLength, actual: token.Length);
+            Assert.Equal(expectedStart, actual: token.TokenStart);
+            Assert.Equal(expectedLength, actual: token.TokenLength);
         }
     }
 }

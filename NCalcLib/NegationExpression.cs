@@ -24,11 +24,6 @@ namespace NCalcLib
                 OperatorToken.GetHashCode(),
                 SubExpression.GetHashCode());
 
-        public override int Length() => OperatorToken.Length + SubExpression.LengthWithWhitespace();
-        public override int LengthWithWhitespace() => OperatorToken.LengthWithWhitespace + SubExpression.LengthWithWhitespace();
-        public override int Start() => OperatorToken.Start;
-        public override int StartWithWhitespace() => OperatorToken.StartWithWhitespace;
-
         public NegationExpression WithOperator(Token newOperator)
         {
             if (OperatorToken.Equals(newOperator))

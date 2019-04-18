@@ -62,10 +62,5 @@ namespace NCalcLib
 
             return new ParenthesizedExpression(LeftParen, SubExpression, newRightParen);
         }
-
-        public override int Start() => LeftParen.Start;
-        public override int StartWithWhitespace() => LeftParen.StartWithWhitespace;
-        public override int Length() => LeftParen.Length + SubExpression.LengthWithWhitespace() + RightParen.LengthWithWhitespace;
-        public override int LengthWithWhitespace() => LeftParen.LengthWithWhitespace + SubExpression.LengthWithWhitespace() + RightParen.LengthWithWhitespace;
     }
 }

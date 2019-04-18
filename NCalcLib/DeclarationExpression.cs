@@ -28,10 +28,5 @@ namespace NCalcLib
                 Identifier.GetHashCode(),
                 AsKeyword.GetHashCode(),
                 Type.GetHashCode());
-
-        public override int Length() => Identifier.Length + AsKeyword.LengthWithWhitespace + Type.LengthWithWhitespace;
-        public override int LengthWithWhitespace() => Identifier.LengthWithWhitespace + AsKeyword.LengthWithWhitespace + Type.LengthWithWhitespace;
-        public override int Start() => Identifier.Start;
-        public override int StartWithWhitespace() => Identifier.StartWithWhitespace;
     }
 }

@@ -19,11 +19,6 @@ namespace NCalcLib
 
         public override int GetHashCode() => Token.GetHashCode();
 
-        public override int Length() => Token.Length;
-        public override int LengthWithWhitespace() => Token.LengthWithWhitespace;
-        public override int Start() => Token.Start;
-        public override int StartWithWhitespace() => Token.StartWithWhitespace;
-
         public override string ToString() => Value.ToString();
     }
 }

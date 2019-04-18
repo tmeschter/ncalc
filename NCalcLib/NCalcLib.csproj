@@ -44,7 +44,6 @@
     <Compile Include="BindingContext.cs" />
     <Compile Include="BooleanLiteralExpression.cs" />
     <Compile Include="DeclarationExpression.cs" />
-    <Compile Include="Diagnostic.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="IdentifierExpression.cs" />
     <Compile Include="Lexer.cs" />

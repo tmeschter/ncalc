@@ -28,11 +28,6 @@ namespace NCalcLib
                 Operator.GetHashCode(),
                 Right.GetHashCode());
 
-        public override int Length() => Left.Length() + Operator.LengthWithWhitespace + Right.LengthWithWhitespace();
-        public override int LengthWithWhitespace() => Left.LengthWithWhitespace() + Operator.LengthWithWhitespace + Right.LengthWithWhitespace();
-        public override int Start() => Left.Start();
-        public override int StartWithWhitespace() => Left.StartWithWhitespace();
-
         public override string ToString() => $"[{Left}{Operator}{Right}]";
 
         public BinaryExpression WithLeft(Expression newLeft)
