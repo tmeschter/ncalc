@@ -41,6 +41,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryExpression.cs" />
+    <Compile Include="BindingTransformResult.cs" />
     <Compile Include="EmptyBlock.cs" />
     <Compile Include="GlobalBindingContext.cs" />
     <Compile Include="Block.cs" />
@@ -53,6 +54,7 @@
     <Compile Include="LocalBindingContext.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="NonEmptyBlock.cs" />
+    <Compile Include="ParseResult.cs" />
     <Compile Include="Statement.cs" />
     <Compile Include="ExpressionStatement.cs" />
     <Compile Include="Globals.cs" />

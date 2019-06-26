@@ -1,24 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NCalcLib
 {
-    public class ParseResult<T> where T : Node
-    {
-        public T Node { get; }
-        public int NextTokenIndex { get; }
-
-        public ParseResult(T node, int nextTokenIndex)
-        {
-            Node = node;
-            NextTokenIndex = nextTokenIndex;
-        }
-    }
-
     public class Parser
     {
         public static Expression ParseExpressionSubmission(ImmutableArray<Token> tokens)
