@@ -41,10 +41,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryExpression.cs" />
-    <Compile Include="BindingContext.cs" />
+    <Compile Include="EmptyBlock.cs" />
+    <Compile Include="GlobalBindingContext.cs" />
+    <Compile Include="Block.cs" />
     <Compile Include="BooleanLiteralExpression.cs" />
     <Compile Include="DeclarationExpression.cs" />
     <Compile Include="Diagnostic.cs" />
+    <Compile Include="IBindingContext.cs" />
+    <Compile Include="IfElseStatement.cs" />
+    <Compile Include="IfStatement.cs" />
+    <Compile Include="LocalBindingContext.cs" />
+    <Compile Include="Node.cs" />
+    <Compile Include="NonEmptyBlock.cs" />
+    <Compile Include="Statement.cs" />
+    <Compile Include="ExpressionStatement.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="IdentifierExpression.cs" />
     <Compile Include="Lexer.cs" />

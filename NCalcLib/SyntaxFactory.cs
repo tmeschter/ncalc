@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,5 +21,13 @@ namespace NCalcLib
         public static ParenthesizedExpression ParenthesizedExpression(Token leftParen, Expression subExpression, Token rightParen) => new ParenthesizedExpression(leftParen, subExpression, rightParen);
         public static IdentifierExpression IdentifierExpression(Token token) => new IdentifierExpression(token);
         public static DeclarationExpression Declaration(Token identifierToken, Token asToken, Token typeToken) => new DeclarationExpression(identifierToken, asToken, typeToken);
+
+        public static ExpressionStatement ExpressionStatement(Expression expression) => new ExpressionStatement(expression);
+        public static IfStatement IfStatement(Token ifToken, Expression condition, Block trueBlock, Token endToken) => new IfStatement(ifToken, condition, trueBlock, endToken);
+        public static IfElseStatement IfElseStatement(Token ifToken, Expression condition, Block trueBlock, Token elseToken, Block falseBlock, Token endToken) => new IfElseStatement(ifToken, condition, trueBlock, elseToken, falseBlock, endToken);
+
+        public static EmptyBlock EmptyBlock(int start) => new EmptyBlock(start);
+        public static Block Block(params Statement[] statements) => new NonEmptyBlock(ImmutableArray.Create(statements));
+
     }
 }

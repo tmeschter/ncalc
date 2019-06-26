@@ -26,7 +26,10 @@ namespace NCalcLib
         BooleanKeyword,
         NumberKeyword,
         Unknown,
-        EndOfInput
+        EndOfInput,
+        IfKeyword,
+        ElseKeyword,
+        EndKeyword
     }
 
     public sealed class Token : IEquatable<Token>

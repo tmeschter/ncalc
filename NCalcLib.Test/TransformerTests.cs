@@ -17,7 +17,7 @@ namespace NCalcLib.Test
         {
             var syntax = NumberLiteralExpression(Token(0, "5", TokenType.NumberLiteral));
 
-            (var newContext, var expression, var errors) = Transformer.Transform(BindingContext.Empty, syntax);
+            (var newContext, var expression, var errors) = Transformer.Transform(GlobalBindingContext.Empty, syntax);
 
             Assert.Equal(expected: 5m, actual: ((LinqExprs.ConstantExpression)expression).Value);
         }
@@ -26,7 +26,7 @@ namespace NCalcLib.Test
         public void BooleanLiteral()
         {
             var syntax = BooleanLiteralExpression(Token(0, "true", TokenType.TrueLiteral));
-            (var newContext, var expression, var errors) = Transformer.Transform(BindingContext.Empty, syntax);
+            (var newContext, var expression, var errors) = Transformer.Transform(GlobalBindingContext.Empty, syntax);
 
             Assert.True((bool)((LinqExprs.ConstantExpression)expression).Value);
         }

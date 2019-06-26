@@ -16,7 +16,7 @@ namespace NCalcLib.Test
         {
             var text = "5";
             var tokens = Lexer.LexSubmission(text);
-            var expression = Parser.ParseSubmission(tokens);
+            var expression = Parser.ParseExpressionSubmission(tokens);
 
             var expected = NumberLiteralExpression(Token(0, "5", TokenType.NumberLiteral));
 
@@ -33,7 +33,7 @@ namespace NCalcLib.Test
             var expectedExpression = NumberLiteralExpression(Token(0, "5.4", TokenType.NumberLiteral));
             var expectedNextTokenIndex = 1;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -58,7 +58,7 @@ namespace NCalcLib.Test
                         tokens[1]));
             var expectedNextToken = 2;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
         }
 
@@ -71,7 +71,7 @@ namespace NCalcLib.Test
             var expectedExpression = NumberLiteralExpression(tokens[0]);
             var expectedNextTokenIndex = 1;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -92,7 +92,7 @@ namespace NCalcLib.Test
                     NumberLiteralExpression(tokens[2]));
             var expectedNextTokenIndex = 3;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -113,7 +113,7 @@ namespace NCalcLib.Test
                     NumberLiteralExpression(tokens[2]));
             var expectedNextTokenIndex = 3;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -139,7 +139,7 @@ namespace NCalcLib.Test
                     NumberLiteralExpression(tokens[4]));
             var expectedNextTokenIndex = 5;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -165,7 +165,7 @@ namespace NCalcLib.Test
                     NumberLiteralExpression(tokens[4]));
             var expectedNextTokenIndex = 5;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -178,7 +178,7 @@ namespace NCalcLib.Test
             var expectedExpression = NumberLiteralExpression(tokens[0]);
             var expectedNextTokenIndex = 1;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -191,7 +191,7 @@ namespace NCalcLib.Test
             var expectedExpression = NumberLiteralExpression(tokens[0]);
             var expectedNextTokenIndex = 1;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -226,7 +226,7 @@ namespace NCalcLib.Test
                         NumberLiteralExpression(tokens[8])));
             var expectedNextTokenIndex = 9;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -244,7 +244,7 @@ namespace NCalcLib.Test
                         NumberLiteralExpression(tokens[3])));
             var expectedNextTokenIndex = 4;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -262,7 +262,7 @@ namespace NCalcLib.Test
                     tokens[2]);
             var expectedNextTokenIndex = 3;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -273,7 +273,7 @@ namespace NCalcLib.Test
         {
             var tokens = Lexer.LexSubmission(text);
             var parseResult = Parser.ParseParenthensizedExpression(tokens);
-            var expression = (ParenthesizedExpression)parseResult.Expression;
+            var expression = (ParenthesizedExpression)parseResult.Node;
 
             Assert.Equal(expectedStart, expression.Start());
             Assert.Equal(expectedLength, expression.Length());
@@ -296,7 +296,7 @@ namespace NCalcLib.Test
                     tokens[4]);
             var expectedNextTokenIndex = 5;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -310,7 +310,7 @@ namespace NCalcLib.Test
             var expectedExpression = IdentifierExpression(tokens[0]);
             var expectedNextTokenIndex = 1;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -328,7 +328,7 @@ namespace NCalcLib.Test
                     NumberLiteralExpression(tokens[2]));
             var expectedNextTokenIndex = 3;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -349,7 +349,7 @@ namespace NCalcLib.Test
                         IdentifierExpression(tokens[4])));
             var expectedNextTokenIndex = 5;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -363,7 +363,7 @@ namespace NCalcLib.Test
             var expectedExpression = BooleanLiteralExpression(tokens[0]);
             var expectedNextTokenIndex = 1;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -381,7 +381,7 @@ namespace NCalcLib.Test
                     NumberLiteralExpression(tokens[2]));
             var expectedNextTokenIndex = 3;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -405,7 +405,7 @@ namespace NCalcLib.Test
                         tokens[6]));
             var expectedNextTokenIndex = 7;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
 
@@ -424,8 +424,49 @@ namespace NCalcLib.Test
                     NumberLiteralExpression(tokens[4]));
             var expectedNextTokenDeclaration = 5;
 
-            Assert.Equal(expectedExpression, parseResult.Expression);
+            Assert.Equal(expectedExpression, parseResult.Node);
             Assert.Equal(expectedNextTokenDeclaration, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
+        public void IfStatement_Basic()
+        {
+            var text = @"if true a end";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseIf(tokens);
+
+            var expectedStatement =
+                IfStatement(
+                    tokens[0],
+                    BooleanLiteralExpression(tokens[1]),
+                    Block(ExpressionStatement(IdentifierExpression(tokens[2]))),
+                    tokens[3]);
+            var expectedNextTokenDeclaration = 4;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextTokenDeclaration, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
+        public void IfStatement_ComparisonConditional()
+        {
+            var text = "if a > b c end";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseIf(tokens);
+
+            var expectedStatement =
+                IfStatement(
+                    tokens[0],
+                    BinaryExpression(
+                        IdentifierExpression(tokens[1]),
+                        tokens[2],
+                        IdentifierExpression(tokens[3])),
+                    Block(ExpressionStatement(IdentifierExpression(tokens[4]))),
+                    tokens[5]);
+            var expectedNextTokenIndex = 6;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
     }
 }

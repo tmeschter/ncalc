@@ -1,4 +1,7 @@
-﻿namespace NCalcLib.Utilities
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace NCalcLib.Utilities
 {
     internal static class HashCodes
     {
@@ -45,6 +48,11 @@
             hash = Mutate(hash, input4);
             hash = Mutate(hash, input5);
             return hash;
+        }
+
+        public static int Hash(IEnumerable<int> inputs)
+        {
+            return inputs.Aggregate(17, Mutate); 
         }
 
         private static int Mutate(int seed, int input)

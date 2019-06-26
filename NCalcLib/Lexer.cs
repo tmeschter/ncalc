@@ -107,6 +107,9 @@ namespace NCalcLib
                 case "as": return identifierToken.WithType(TokenType.AsKeyword);
                 case "boolean": return identifierToken.WithType(TokenType.BooleanKeyword);
                 case "number": return identifierToken.WithType(TokenType.NumberKeyword);
+                case "if": return identifierToken.WithType(TokenType.IfKeyword);
+                case "else": return identifierToken.WithType(TokenType.ElseKeyword);
+                case "end": return identifierToken.WithType(TokenType.EndKeyword);
                 default: return identifierToken;
             }
         }

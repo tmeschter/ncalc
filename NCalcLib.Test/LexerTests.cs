@@ -53,17 +53,6 @@ namespace NCalcLib.Test
         }
 
         [Theory]
-        [InlineData("foo", 0, 3, 0, 3)]
-        [InlineData("  foo", 0, 5, 2, 3)]
-        [InlineData("foo1bar", 0, 7, 0, 7)]
-        public void Identifier_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
-        {
-            var identifierToken = Lexer.LexIdentifier(text);
-
-            AssertStartLengthAndType(identifierToken, TokenType.Identifier, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
-        }
-
-        [Theory]
         [InlineData("1foo")]
         public void Identifier_DoesNotLex(string text)
         {
@@ -93,83 +82,39 @@ namespace NCalcLib.Test
         }
 
         [Theory]
-        [InlineData("true", TokenType.TrueLiteral, 0, 4, 0, 4)]
-        [InlineData("false", TokenType.FalseLiteral, 0, 5, 0, 5)]
-        [InlineData("  true", TokenType.TrueLiteral, 0, 6, 2, 4)]
-        public void BooleanLiteral_Lexes(string text, TokenType expectedType, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
+        [InlineData("as", TokenType.AsKeyword)]
+        [InlineData("asfoo", TokenType.Identifier)]
+        [InlineData("boolean", TokenType.BooleanKeyword)]
+        [InlineData("booleanfoo", TokenType.Identifier)]
+        [InlineData("else", TokenType.ElseKeyword)]
+        [InlineData("elsefoo", TokenType.Identifier)]
+        [InlineData("false", TokenType.FalseLiteral)]
+        [InlineData("falsefoo", TokenType.Identifier)]
+        [InlineData("foo", TokenType.Identifier)]
+        [InlineData("foo1bar", TokenType.Identifier)]
+        [InlineData("if", TokenType.IfKeyword)]
+        [InlineData("iffoo", TokenType.Identifier)]
+        [InlineData("number", TokenType.NumberKeyword)]
+        [InlineData("numberfoo", TokenType.Identifier)]
+        [InlineData("end", TokenType.EndKeyword)]
+        [InlineData("endfoo", TokenType.Identifier)]
+        [InlineData("true", TokenType.TrueLiteral)]
+        [InlineData("truefoo", TokenType.Identifier)]
+        public void IdentifierOrKeyword_Lexes(string text, TokenType expectedType)
         {
-            var token = Lexer.LexIdentifierOrKeyword(text, 0);
+            for (var precedingWhitespaceLength = 0; precedingWhitespaceLength <= 2; precedingWhitespaceLength++)
+            {
+                var textWithWhitespace = new string(' ', precedingWhitespaceLength) + text;
 
-            AssertStartLengthAndType(token, expectedType, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
-        }
+                var expectedStartWithWhitespace = 0;
+                var expectedLengthWithWhitespace = textWithWhitespace.Length;
+                var expectedStart = precedingWhitespaceLength;
+                var expectedLength = text.Length;
 
-        [Theory]
-        [InlineData("truefoo")]
-        public void BooleanLiteral_DoesNotLex(string text)
-        {
-            var token = Lexer.LexIdentifierOrKeyword(text, 0);
+                var token = Lexer.LexIdentifierOrKeyword(textWithWhitespace, 0);
 
-            Assert.Equal(TokenType.Identifier, token.Type);
-        }
-
-        [Theory]
-        [InlineData("as", 0, 2, 0, 2)]
-        [InlineData("  as", 0, 4, 2, 2)]
-        [InlineData(" as ", 0, 3, 1, 2)]
-        public void AsKeyword_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
-        {
-            var token = Lexer.LexIdentifierOrKeyword(text, 0);
-
-            AssertStartLengthAndType(token, TokenType.AsKeyword, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
-        }
-
-        [Theory]
-        [InlineData("asb")]
-        public void AsKeyword_DoesNotLex(string text)
-        {
-            var token = Lexer.LexIdentifierOrKeyword(text, 0);
-
-            Assert.Equal(TokenType.Identifier, token.Type);
-        }
-
-        [Theory]
-        [InlineData("boolean", 0, 7, 0, 7)]
-        [InlineData("  boolean", 0, 9, 2, 7)]
-        [InlineData(" boolean ", 0, 8, 1, 7)]
-        public void BooleanKeyword_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
-        {
-            var token = Lexer.LexIdentifierOrKeyword(text, 0);
-
-            AssertStartLengthAndType(token, TokenType.BooleanKeyword, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
-        }
-
-        [Theory]
-        [InlineData("booleanb")]
-        public void BooleanKeyword_DoesNotLex(string text)
-        {
-            var token = Lexer.LexIdentifierOrKeyword(text, 0);
-
-            Assert.Equal(TokenType.Identifier, token.Type);
-        }
-
-        [Theory]
-        [InlineData("number", 0, 6, 0, 6)]
-        [InlineData("  number", 0, 8, 2, 6)]
-        [InlineData(" number ", 0, 7, 1, 6)]
-        public void NumberKeyword_Lexes(string text, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
-        {
-            var token = Lexer.LexIdentifierOrKeyword(text, 0);
-
-            AssertStartLengthAndType(token, TokenType.NumberKeyword, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
-        }
-
-        [Theory]
-        [InlineData("numbera")]
-        public void NumberKeyword_DoesNotLex(string text)
-        {
-            var token = Lexer.LexIdentifierOrKeyword(text, 0);
-
-            Assert.Equal(TokenType.Identifier, token.Type);
+                AssertStartLengthAndType(token, expectedType, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            }
         }
 
         private static void AssertStartLengthAndType(Token token, TokenType expectedType, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)

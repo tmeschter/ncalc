@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
 using LinqExpression = System.Linq.Expressions.Expression;
@@ -7,7 +8,7 @@ namespace NCalcLib
 {
     public class Transformer
     {
-        public static TransformResult Transform(BindingContext bindingContext, Expression e)
+        public static TransformResult Transform(IBindingContext bindingContext, Node e)
         {
             switch (e)
             {
@@ -32,51 +33,70 @@ namespace NCalcLib
                 case ParenthesizedExpression paren:
                     return Transform(bindingContext, paren.SubExpression);
 
+                case ExpressionStatement statement:
+                    return Transform(bindingContext, statement.Expression);
+
+                case IfStatement statement:
+                    return TransformIf(bindingContext, statement);
+
+                case Block block:
+                    return TransformBlock(bindingContext, block);
+
                 default:
                     throw new InvalidOperationException();
             }
         }
 
-        private static TransformResult TransformIdentifier(BindingContext bindingContext, IdentifierExpression identifier)
+        private static TransformResult TransformBlock(IBindingContext bindingContext, Block block)
         {
-            if (!bindingContext.TryGetVariableType(identifier.Id, out var variableType))
+            var originalBindingContext = bindingContext;
+
+            bindingContext = new LocalBindingContext(bindingContext);
+            LinqExpression expression = null;
+            ImmutableList<Diagnostic> diagnostics = ImmutableList<Diagnostic>.Empty;
+
+            var allDiagnostics = ImmutableList.CreateBuilder<Diagnostic>();
+            var expressions = new List<LinqExpression>();
+
+            foreach (var statement in block.Statements)
+            {
+                (bindingContext, expression, diagnostics) = Transform(bindingContext, statement);
+                expressions.Add(expression);
+                allDiagnostics.AddRange(diagnostics);
+            }
+
+            return new TransformResult(
+                originalBindingContext,
+                LinqExpression.Block(bindingContext.LocalVariables, expressions),
+                allDiagnostics.ToImmutable());
+        }
+
+        private static TransformResult TransformIf(IBindingContext bindingContext, IfStatement statement)
+        {
+            var (newBindingContext, conditionalExpression, conditionalErrors) = Transform(bindingContext, statement.Condition);
+            var (newBodyBindingContext, bodyExpression, bodyErrors) = Transform(newBindingContext, statement.TrueBlock);
+
+            var ifExpression = LinqExpression.IfThen(conditionalExpression, bodyExpression);
+
+            return new TransformResult(bindingContext, ifExpression, conditionalErrors.AddRange(bodyErrors));
+        }
+
+        private static TransformResult TransformIdentifier(IBindingContext bindingContext, IdentifierExpression identifier)
+        {
+            var expression = bindingContext.CreateGetVariableExpression(identifier.Id);
+            if (expression == null)
             {
                 var error = new Diagnostic(identifier.Start(), identifier.Length(), $"Variable '{identifier.Id}' has not been declared.");
                 return new TransformResult(bindingContext, LinqExpression.Constant(0m), ImmutableList.Create(error));
             }
             else
             {
-                var expression = GetGlobalVariableExpression(identifier.Id, variableType);
-
                 return new TransformResult(bindingContext, expression);
             }
         }
 
-        private static LinqExpression SetGlobalVariableExpression(string variableName, LinqExpression expression)
-        {
-            return LinqExpression.Call(
-                    LinqExpression.Property(
-                        expression: null,
-                        property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
-                    typeof(Globals).GetMethod(nameof(Globals.SetVariable)),
-                    LinqExpression.Constant(variableName),
-                    LinqExpression.Convert(expression, typeof(object)));
-        }
-
-        private static LinqExpression GetGlobalVariableExpression(string variableName, Type variableType)
-        {
-            return LinqExpression.Convert(
-                LinqExpression.Call(
-                    LinqExpression.Property(
-                        expression: null,
-                        property: typeof(Globals).GetProperty(nameof(Globals.Singleton))),
-                    typeof(Globals).GetMethod(nameof(Globals.GetVariable)),
-                    LinqExpression.Constant(variableName)),
-                variableType);
-        }
-
         private static TransformResult TransformNumericBinop(
-            BindingContext bindingContext,
+            IBindingContext bindingContext,
             BinaryExpression binop,
             Func<LinqExpression, LinqExpression, LinqExpression> createLinqBinop,
             Func<BinaryExpression, LinqExpression, LinqExpression, ImmutableList<Diagnostic>> typeCheckBinop)
@@ -135,9 +155,9 @@ namespace NCalcLib
             return typeCheckErrors;
         }
 
-        private static TransformResult TransformBinop(BindingContext bindingContext, BinaryExpression binop)
+        private static TransformResult TransformBinop(IBindingContext bindingContext, BinaryExpression binop)
         {
-            (BindingContext, ImmutableList<Diagnostic> errors) handleDeclaration(DeclarationExpression declaration)
+            (IBindingContext, ImmutableList<Diagnostic> errors) handleDeclaration(DeclarationExpression declaration)
             {
                 var id = declaration.Identifier.Text;
                 Type type;
@@ -173,16 +193,18 @@ namespace NCalcLib
                     variableNameToken = identifier.Token;
                 }
 
-                if (!bindingContext.TryGetVariableType(variableNameToken.Text, out var _))
-                {
-                    leftErrors = leftErrors.Add(new Diagnostic(variableNameToken.Start, variableNameToken.Length, $"Variable '{variableNameToken.Text}' has not been declared."));
-                }
-
                 LinqExpression right;
                 ImmutableList<Diagnostic> rightErrors;
                 (bindingContext, right, rightErrors) = Transform(bindingContext, binop.Right);
 
-                return new TransformResult(bindingContext, SetGlobalVariableExpression(variableNameToken.Text, right), leftErrors.AddRange(rightErrors));
+                var expression = bindingContext.CreateSetVariableExpression(variableNameToken.Text, right);
+                if (expression == null)
+                {
+                    leftErrors = leftErrors.Add(new Diagnostic(variableNameToken.Start, variableNameToken.Length, $"Variable '{variableNameToken.Text}' has not been declared."));
+                    expression = LinqExpression.Constant(0m);
+                }
+
+                return new TransformResult(bindingContext, expression, leftErrors.AddRange(rightErrors));
             }
 
             switch (binop.Operator.Text)
