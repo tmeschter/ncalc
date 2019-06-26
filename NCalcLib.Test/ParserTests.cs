@@ -410,21 +410,19 @@ namespace NCalcLib.Test
         }
 
         [Fact]
-        public void Assignment_NumberDeclaration()
+        public void DeclarationStatement()
         {
             var text = "a as number = 0";
             var tokens = Lexer.LexSubmission(text);
-            var parseResult = Parser.ParseAssignment(tokens);
+            var parseResult = Parser.ParseDeclaration(tokens);
 
-            var expectedExpression =
-                BinaryExpression(
-                    Declaration(
-                        tokens[0], tokens[1], tokens[2]),
-                    tokens[3],
-                    NumberLiteralExpression(tokens[4]));
+            var expectedStatement =
+                Declaration(
+                    tokens[0], tokens[1], tokens[2], tokens[3],
+                NumberLiteralExpression(tokens[4]));
             var expectedNextTokenDeclaration = 5;
 
-            Assert.Equal(expectedExpression, parseResult.Node);
+            Assert.Equal(expectedStatement, parseResult.Node);
             Assert.Equal(expectedNextTokenDeclaration, parseResult.NextTokenIndex);
         }
 

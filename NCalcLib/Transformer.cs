@@ -33,6 +33,9 @@ namespace NCalcLib
                 case ParenthesizedExpression paren:
                     return Transform(bindingContext, paren.SubExpression);
 
+                case DeclarationStatement statement:
+                    return TransformDeclaration(bindingContext, statement);
+
                 case ExpressionStatement statement:
                     return Transform(bindingContext, statement.Expression);
 
@@ -155,42 +158,57 @@ namespace NCalcLib
             return typeCheckErrors;
         }
 
-        private static TransformResult TransformBinop(IBindingContext bindingContext, BinaryExpression binop)
+        private static TransformResult TransformDeclaration(IBindingContext bindingContext, DeclarationStatement declaration)
         {
-            (IBindingContext, ImmutableList<Diagnostic> errors) handleDeclaration(DeclarationExpression declaration)
+            var variableName = declaration.Identifier;
+            Type type;
+            var leftErrors = ImmutableList<Diagnostic>.Empty;
+            switch (declaration.Type.Type)
             {
-                var id = declaration.Identifier.Text;
-                Type type;
-                var errors = ImmutableList<Diagnostic>.Empty;
-                switch (declaration.Type.Type)
-                {
-                    case TokenType.BooleanKeyword:
-                        type = typeof(bool);
-                        break;
-                    case TokenType.NumberKeyword:
-                        type = typeof(decimal);
-                        break;
-                    default:
-                        type = typeof(decimal);
-                        errors = errors.Add(new Diagnostic(declaration.Type.Start, declaration.Type.Length, $"Unknown type '{declaration.Type.Text}'."));
-                        break;
+                case TokenType.BooleanKeyword:
+                    type = typeof(bool);
+                    break;
+                case TokenType.NumberKeyword:
+                    type = typeof(decimal);
+                    break;
+                default:
+                    type = typeof(decimal);
+                    leftErrors = leftErrors.Add(new Diagnostic(declaration.Type.Start, declaration.Type.Length, $"Unknown type '{declaration.Type.Text}'."));
+                    break;
 
-                }
-                return (bindingContext.SetVariableType(id, type), errors);
             }
 
+            LinqExpression initExpression;
+            ImmutableList<Diagnostic> initExpressionErrors;
+            (bindingContext, initExpression, initExpressionErrors) = Transform(bindingContext, declaration.InitializationExpression);
+
+            // TODO check if the variable already exists.
+
+            bindingContext = bindingContext.SetVariableType(variableName.Text, type);
+
+            var expression = bindingContext.CreateSetVariableExpression(variableName.Text, initExpression);
+            if (expression == null)
+            {
+                leftErrors = leftErrors.Add(new Diagnostic(variableName.Start, variableName.Length, $"Variable '{variableName.Text}' has not been declared."));
+                expression = LinqExpression.Constant(0m);
+            }
+
+            return new TransformResult(bindingContext, expression, leftErrors.AddRange(initExpressionErrors));
+        }
+
+        private static TransformResult TransformBinop(IBindingContext bindingContext, BinaryExpression binop)
+        {
             TransformResult transformAssignment()
             {
                 Token variableNameToken = null;
                 var leftErrors = ImmutableList<Diagnostic>.Empty;
-                if (binop.Left is DeclarationExpression declaration)
-                {
-                    (bindingContext, leftErrors) = handleDeclaration(declaration);
-                    variableNameToken = declaration.Identifier;
-                }
-                else if (binop.Left is IdentifierExpression identifier)
+                if (binop.Left is IdentifierExpression identifier)
                 {
                     variableNameToken = identifier.Token;
+                }
+                else
+                {
+                    // TODO: emit an error if the left side of the assignment is anything other than an identifier
                 }
 
                 LinqExpression right;

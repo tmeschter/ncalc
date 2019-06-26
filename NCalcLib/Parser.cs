@@ -179,7 +179,7 @@ namespace NCalcLib
         public static ParseResult<Expression> ParseAssignment(ImmutableArray<Token> tokens, int start = 0)
         {
             int index = start;
-            var leftHandSideResult = ParseDeclarationExpression(tokens, index) ?? ParseIdentifier(tokens, index);
+            var leftHandSideResult = ParseIdentifier(tokens, index);
             if (leftHandSideResult != null)
             {
                 index = leftHandSideResult.NextTokenIndex;
@@ -225,19 +225,6 @@ namespace NCalcLib
             }
         }
 
-        public static ParseResult<Expression> ParseDeclarationExpression(ImmutableArray<Token> tokens, int start = 0)
-        {
-            if (start + 2 < tokens.Length
-                && tokens[start].Type == TokenType.Identifier
-                && tokens[start + 1].Type == TokenType.AsKeyword
-                && IsTypeToken(tokens[start + 2]))
-            {
-                return new ParseResult<Expression>(new DeclarationExpression(tokens[start], tokens[start + 1], tokens[start + 2]), start + 3);
-            }
-
-            return null;
-        }
-
         private static bool IsTypeToken(Token token)
         {
             return token.Type == TokenType.BooleanKeyword
@@ -247,6 +234,7 @@ namespace NCalcLib
         public static ParseResult<Statement> ParseStatement(ImmutableArray<Token> tokens, int start = 0)
         {
             return ParseIf(tokens, start)
+                ?? ParseDeclaration(tokens, start)
                 ?? ParseExpressionStatement(tokens, start);
         }
 
@@ -270,6 +258,26 @@ namespace NCalcLib
                             new IfStatement(ifToken, expressionParseResult.Node, blockParseResult.Node, endToken),
                             blockParseResult.NextTokenIndex + 1);
                     }
+                }
+            }
+
+            return null;
+        }
+
+        public static ParseResult<Statement> ParseDeclaration(ImmutableArray<Token> tokens, int start = 0)
+        {
+            if (start + 3 < tokens.Length
+                && tokens[start].Type == TokenType.Identifier
+                && tokens[start + 1].Type == TokenType.AsKeyword
+                && IsTypeToken(tokens[start + 2])
+                && tokens[start + 3].Type == TokenType.Equal)
+            {
+                var expressionParseResult = ParseExpression(tokens, start + 4);
+                if (expressionParseResult != null)
+                {
+                    return new ParseResult<Statement>(
+                        new DeclarationStatement(tokens[start], tokens[start + 1], tokens[start + 2], tokens[start + 3], expressionParseResult.Node),
+                        expressionParseResult.NextTokenIndex);
                 }
             }
 

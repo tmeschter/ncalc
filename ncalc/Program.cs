@@ -57,7 +57,7 @@ namespace ncalc
             var compiledLambda = lambda.Compile();
             compiledLambda();
 
-            return bindingContext;
+            return (GlobalBindingContext)newBindingContext;
         }
 
         private static GlobalBindingContext HandleExpression(GlobalBindingContext bindingContext, Expression expressionSyntax)

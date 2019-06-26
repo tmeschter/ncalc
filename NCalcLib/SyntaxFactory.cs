@@ -20,8 +20,8 @@ namespace NCalcLib
         public static BooleanLiteralExpression BooleanLiteralExpression(Token token) => new BooleanLiteralExpression(token);
         public static ParenthesizedExpression ParenthesizedExpression(Token leftParen, Expression subExpression, Token rightParen) => new ParenthesizedExpression(leftParen, subExpression, rightParen);
         public static IdentifierExpression IdentifierExpression(Token token) => new IdentifierExpression(token);
-        public static DeclarationExpression Declaration(Token identifierToken, Token asToken, Token typeToken) => new DeclarationExpression(identifierToken, asToken, typeToken);
 
+        public static DeclarationStatement Declaration(Token identifierToken, Token asToken, Token typeToken, Token equalsToken, Expression initializationExpression) => new DeclarationStatement(identifierToken, asToken, typeToken, equalsToken, initializationExpression);
         public static ExpressionStatement ExpressionStatement(Expression expression) => new ExpressionStatement(expression);
         public static IfStatement IfStatement(Token ifToken, Expression condition, Block trueBlock, Token endToken) => new IfStatement(ifToken, condition, trueBlock, endToken);
         public static IfElseStatement IfElseStatement(Token ifToken, Expression condition, Block trueBlock, Token elseToken, Block falseBlock, Token endToken) => new IfElseStatement(ifToken, condition, trueBlock, elseToken, falseBlock, endToken);
