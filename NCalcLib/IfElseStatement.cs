@@ -1,4 +1,6 @@
-﻿namespace NCalcLib
+﻿using static NCalcLib.Utilities.HashCodes;
+
+namespace NCalcLib
 {
     public class IfElseStatement : Statement
     {
@@ -19,39 +21,44 @@
         public Block FalseBlock { get; }
         public Token EndToken { get; }
 
-        public override bool Equals(Statement other)
-        {
-            throw new System.NotImplementedException();
-        }
+        public override bool Equals(Statement other) =>
+            other is IfElseStatement statement
+            && IfToken.Equals(statement.IfToken)
+            && Condition.Equals(statement.Condition)
+            && TrueBlock.Equals(statement.TrueBlock)
+            && ElseToken.Equals(statement.ElseToken)
+            && FalseBlock.Equals(statement.FalseBlock)
+            && EndToken.Equals(statement.EndToken);
 
-        public override bool Equals(object obj)
-        {
-            throw new System.NotImplementedException();
-        }
+        public override bool Equals(object obj) => Equals(obj as Statement);
 
-        public override int GetHashCode()
-        {
-            throw new System.NotImplementedException();
-        }
+        public override int GetHashCode() => 
+            Hash(
+                IfToken.GetHashCode(),
+                Condition.GetHashCode(),
+                TrueBlock.GetHashCode(),
+                ElseToken.GetHashCode(),
+                FalseBlock.GetHashCode(),
+                EndToken.GetHashCode());
 
-        public override int Length()
-        {
-            throw new System.NotImplementedException();
-        }
+        public override int Length() => 
+            IfToken.Length
+            + Condition.LengthWithWhitespace()
+            + TrueBlock.LengthWithWhitespace()
+            + ElseToken.LengthWithWhitespace
+            + FalseBlock.LengthWithWhitespace()
+            + EndToken.LengthWithWhitespace;
 
-        public override int LengthWithWhitespace()
-        {
-            throw new System.NotImplementedException();
-        }
+        public override int LengthWithWhitespace() =>
+            IfToken.LengthWithWhitespace
+            + Condition.LengthWithWhitespace()
+            + TrueBlock.LengthWithWhitespace()
+            + ElseToken.LengthWithWhitespace
+            + FalseBlock.LengthWithWhitespace()
+            + EndToken.LengthWithWhitespace;
 
-        public override int Start()
-        {
-            throw new System.NotImplementedException();
-        }
+        public override int Start() => IfToken.Start;
 
-        public override int StartWithWhitespace()
-        {
-            throw new System.NotImplementedException();
-        }
+        public override int StartWithWhitespace() => IfToken.StartWithWhitespace;
     }
 }

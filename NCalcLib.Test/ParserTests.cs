@@ -466,5 +466,89 @@ namespace NCalcLib.Test
             Assert.Equal(expectedStatement, parseResult.Node);
             Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
         }
+
+        [Fact]
+        public void IfElseStatement_BothBlocks()
+        {
+            var text = "if a b else c end";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseIfElse(tokens);
+
+            var expectedStatement =
+                IfElseStatement(
+                    tokens[0],
+                    IdentifierExpression(tokens[1]),
+                    Block(ExpressionStatement(IdentifierExpression(tokens[2]))),
+                    tokens[3],
+                    Block(ExpressionStatement(IdentifierExpression(tokens[4]))),
+                    tokens[5]);
+            var expectedNextTokenIndex = 6;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
+        public void IfElseStatement_NeitherBlocks()
+        {
+            var text = "if a else end";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseIfElse(tokens);
+
+            var expectedStatement =
+                IfElseStatement(
+                    tokens[0],
+                    IdentifierExpression(tokens[1]),
+                    EmptyBlock(tokens[2].StartWithWhitespace),
+                    tokens[2],
+                    EmptyBlock(tokens[3].StartWithWhitespace),
+                    tokens[3]);
+            var expectedNextTokenIndex = 4;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
+        public void IfElseStatement_EmptyTrueBlock()
+        {
+            var text = "if a else b end";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseIfElse(tokens);
+
+            var expectedStatement =
+                IfElseStatement(
+                    tokens[0],
+                    IdentifierExpression(tokens[1]),
+                    EmptyBlock(tokens[2].StartWithWhitespace),
+                    tokens[2],
+                    Block(ExpressionStatement(IdentifierExpression(tokens[3]))),
+                    tokens[4]);
+            var expectedNextToken = 5;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
+        public void IfElseStatement_EmptyFalseBlock()
+        {
+            var text = "if a b else end";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseIfElse(tokens);
+
+            var expectedStatement =
+                IfElseStatement(
+                    tokens[0],
+                    IdentifierExpression(tokens[1]),
+                    Block(ExpressionStatement(IdentifierExpression(tokens[2]))),
+                    tokens[3],
+                    EmptyBlock(tokens[4].StartWithWhitespace),
+                    tokens[4]);
+            var expectedNextToken = 5;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
+        }
     }
 }

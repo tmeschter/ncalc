@@ -55,6 +55,11 @@ namespace NCalcLib.Utilities
             return inputs.Aggregate(17, Mutate); 
         }
 
+        public static int Hash(params int[] inputs)
+        {
+            return Hash((IEnumerable<int>)inputs);
+        }
+
         private static int Mutate(int seed, int input)
         {
             return seed * 31 + input;

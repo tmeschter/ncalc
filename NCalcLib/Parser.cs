@@ -233,9 +233,41 @@ namespace NCalcLib
 
         public static ParseResult<Statement> ParseStatement(ImmutableArray<Token> tokens, int start = 0)
         {
-            return ParseIf(tokens, start)
+            return ParseIfElse(tokens, start)
+                ?? ParseIf(tokens, start)
                 ?? ParseDeclaration(tokens, start)
                 ?? ParseExpressionStatement(tokens, start);
+        }
+
+        public static ParseResult<Statement> ParseIfElse(ImmutableArray<Token> tokens, int start = 0)
+        {
+            if (start < tokens.Length
+                && tokens[start].Type == TokenType.IfKeyword)
+            {
+                var ifToken = tokens[start];
+                start = start + 1;
+
+                if (ParseExpression(tokens, start) is ParseResult<Expression> expressionParseResult)
+                {
+                    var trueBlockParseResult = ParseBlock(tokens, expressionParseResult.NextTokenIndex);
+                    if (trueBlockParseResult.NextTokenIndex < tokens.Length
+                        && tokens[trueBlockParseResult.NextTokenIndex].Type == TokenType.ElseKeyword)
+                    {
+                        var elseToken = tokens[trueBlockParseResult.NextTokenIndex];
+                        var falseBlockParseResult = ParseBlock(tokens, trueBlockParseResult.NextTokenIndex + 1);
+                        if (falseBlockParseResult.NextTokenIndex < tokens.Length
+                            && tokens[falseBlockParseResult.NextTokenIndex].Type == TokenType.EndKeyword)
+                        {
+                            var endToken = tokens[falseBlockParseResult.NextTokenIndex];
+                            return new ParseResult<Statement>(
+                                new IfElseStatement(ifToken, expressionParseResult.Node, trueBlockParseResult.Node, elseToken, falseBlockParseResult.Node, endToken),
+                                falseBlockParseResult.NextTokenIndex + 1);
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         public static ParseResult<Statement> ParseIf(ImmutableArray<Token> tokens, int start = 0)
@@ -307,7 +339,7 @@ namespace NCalcLib
             }
 
             return builder.Count == 0
-                ? new ParseResult<Block>(new EmptyBlock(start), start)
+                ? new ParseResult<Block>(new EmptyBlock(tokens[start].StartWithWhitespace), start)
                 : new ParseResult<Block>(new NonEmptyBlock(builder.ToImmutable()), start);
         }
     }

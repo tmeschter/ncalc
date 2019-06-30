@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq.Expressions;
 using LinqExpression = System.Linq.Expressions.Expression;
 
 namespace NCalcLib
@@ -42,6 +41,9 @@ namespace NCalcLib
                 case IfStatement statement:
                     return TransformIf(bindingContext, statement);
 
+                case IfElseStatement statement:
+                    return TransformIfElse(bindingContext, statement);
+
                 case Block block:
                     return TransformBlock(bindingContext, block);
 
@@ -55,14 +57,13 @@ namespace NCalcLib
             var originalBindingContext = bindingContext;
 
             bindingContext = new LocalBindingContext(bindingContext);
-            LinqExpression expression = null;
-            ImmutableList<Diagnostic> diagnostics = ImmutableList<Diagnostic>.Empty;
-
             var allDiagnostics = ImmutableList.CreateBuilder<Diagnostic>();
             var expressions = new List<LinqExpression>();
 
             foreach (var statement in block.Statements)
             {
+                LinqExpression expression;
+                ImmutableList<Diagnostic> diagnostics;
                 (bindingContext, expression, diagnostics) = Transform(bindingContext, statement);
                 expressions.Add(expression);
                 allDiagnostics.AddRange(diagnostics);
@@ -82,6 +83,17 @@ namespace NCalcLib
             var ifExpression = LinqExpression.IfThen(conditionalExpression, bodyExpression);
 
             return new TransformResult(bindingContext, ifExpression, conditionalErrors.AddRange(bodyErrors));
+        }
+
+        private static TransformResult TransformIfElse(IBindingContext bindingContext, IfElseStatement statement)
+        {
+            var (newBindingContext, conditionalExpression, conditionalErrors) = Transform(bindingContext, statement.Condition);
+            var (trueBodyBindingContext, trueExpression, trueBodyErrors) = Transform(newBindingContext, statement.TrueBlock);
+            var (falseBodyBindingContext, falseExpression, falseBodyErrors) = Transform(newBindingContext, statement.FalseBlock);
+
+            var ifElseExpression = LinqExpression.IfThenElse(conditionalExpression, trueExpression, falseExpression);
+
+            return new TransformResult(bindingContext, ifElseExpression, conditionalErrors.AddRange(trueBodyErrors).AddRange(falseBodyErrors));
         }
 
         private static TransformResult TransformIdentifier(IBindingContext bindingContext, IdentifierExpression identifier)
