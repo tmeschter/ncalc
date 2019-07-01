@@ -36,8 +36,8 @@ namespace NCalcLib
         }
 
         public static ParseResult<Expression> ParseNumberLiteral(ImmutableArray<Token> tokens, int start = 0) =>
-            start < tokens.Length && tokens[start].Type == TokenType.NumberLiteral
-            ? new ParseResult<Expression>(new NumberLiteralExpression(tokens[start]), start + 1)
+            GetNextToken(tokens, start, TokenType.NumberLiteral) is Token token
+            ? new ParseResult<Expression>(new NumberLiteralExpression(token), start + 1)
             : null;
 
         public static ParseResult<Expression> ParseNegationExpression(ImmutableArray<Token> tokens, int start = 0)
@@ -48,8 +48,7 @@ namespace NCalcLib
                 start = start + 1;
             }
 
-            var subExpressionParseResult = ParseOperandExpression(tokens, start);
-            if (subExpressionParseResult != null)
+            if (ParseOperandExpression(tokens, start) is ParseResult<Expression> subExpressionParseResult)
             {
                 if (operatorToken != null)
                 {
@@ -72,33 +71,16 @@ namespace NCalcLib
 
         public static ParseResult<Expression> ParseParenthensizedExpression(ImmutableArray<Token> tokens, int start = 0)
         {
-            int index = start;
-
-            Token leftParenToken = GetNextToken(tokens, index, TokenType.LeftParen);
-            if (leftParenToken == null)
+            if (GetNextToken(tokens, start, TokenType.LeftParen) is Token leftParenToken
+                && ParseExpression(tokens, start + 1) is ParseResult<Expression> subExpressionParseResult
+                && GetNextToken(tokens, subExpressionParseResult.NextTokenIndex, TokenType.RightParen) is Token rightParenToken)
             {
-                return null;
+                return new ParseResult<Expression>(
+                    new ParenthesizedExpression(leftParenToken, subExpressionParseResult.Node, rightParenToken),
+                    subExpressionParseResult.NextTokenIndex + 1);
             }
 
-            index = index + 1;
-
-            var subExpressionParseResult = ParseExpression(tokens, index);
-            if (subExpressionParseResult == null)
-            {
-                return null;
-            }
-
-            index = subExpressionParseResult.NextTokenIndex;
-
-            Token rightParenToken = GetNextToken(tokens, index, TokenType.RightParen);
-            if (rightParenToken == null)
-            {
-                return null;
-            }
-
-            index = index + 1;
-
-            return new ParseResult<Expression>(new ParenthesizedExpression(leftParenToken, subExpressionParseResult.Node, rightParenToken), index);
+            return null;
         }
 
         private static Token GetNextToken(ImmutableArray<Token> tokens, int index, TokenType tokenType) =>
@@ -132,33 +114,29 @@ namespace NCalcLib
 
         private static ParseResult<Expression> ParseLeftAssociativeBinop(ImmutableArray<Token> tokens, int start, TokenType[] opTokenTypes, Func<ImmutableArray<Token>, int, ParseResult<Expression>> subExpressionParser)
         {
-            var index = start;
-            var expressionParseResult = subExpressionParser(tokens, index);
-            if (expressionParseResult == null)
+            var nextTokenIndex = start;
+
+            if (!(subExpressionParser(tokens, nextTokenIndex) is ParseResult<Expression> expressionParseResult))
             {
                 return null;
             }
 
             var expression = expressionParseResult.Node;
-            index = expressionParseResult.NextTokenIndex;
+            nextTokenIndex = expressionParseResult.NextTokenIndex;
 
-            var op = GetNextToken(tokens, index, opTokenTypes);
-            while (op != null)
+            while (GetNextToken(tokens, nextTokenIndex, opTokenTypes) is Token op)
             {
-                index = index + 1;
-                var rightHandExpressionResult = subExpressionParser(tokens, index);
-                if (rightHandExpressionResult == null)
+                nextTokenIndex = nextTokenIndex + 1;
+                if (!(subExpressionParser(tokens, nextTokenIndex) is ParseResult<Expression> rightHandExpressionResult))
                 {
                     return null;
                 }
 
-                index = rightHandExpressionResult.NextTokenIndex;
+                nextTokenIndex = rightHandExpressionResult.NextTokenIndex;
                 expression = new BinaryExpression(expression, op, rightHandExpressionResult.Node);
-
-                op = GetNextToken(tokens, index, opTokenTypes);
             }
 
-            return new ParseResult<Expression>(expression, index);
+            return new ParseResult<Expression>(expression, nextTokenIndex);
         }
 
         public static ParseResult<Expression> ParseRelational(ImmutableArray<Token> tokens, int start = 0)
@@ -172,8 +150,8 @@ namespace NCalcLib
         }
 
         public static ParseResult<Expression> ParseIdentifier(ImmutableArray<Token> tokens, int start = 0) =>
-            start < tokens.Length && tokens[start].Type == TokenType.Identifier
-            ? new ParseResult<Expression>(new IdentifierExpression(tokens[start]), start + 1)
+            GetNextToken(tokens, start, TokenType.Identifier) is Token identifierToken
+            ? new ParseResult<Expression>(new IdentifierExpression(identifierToken), start + 1)
             : null;
 
         public static ParseResult<Expression> ParseAssignment(ImmutableArray<Token> tokens, int start = 0)
@@ -209,26 +187,9 @@ namespace NCalcLib
 
         public static ParseResult<Expression> ParseBooleanLiteral(ImmutableArray<Token> tokens, int start = 0)
         {
-            if (start >= tokens.Length)
-            {
-                return null;
-            }
-
-            switch (tokens[start].Type)
-            {
-                case TokenType.FalseLiteral:
-                case TokenType.TrueLiteral:
-                    return new ParseResult<Expression>(new BooleanLiteralExpression(tokens[start]), start + 1);
-
-                default:
-                    return null;
-            }
-        }
-
-        private static bool IsTypeToken(Token token)
-        {
-            return token.Type == TokenType.BooleanKeyword
-                || token.Type == TokenType.NumberKeyword;
+            return GetNextToken(tokens, start, TokenType.FalseLiteral, TokenType.TrueLiteral) is Token booleanLiteralToken
+                ? new ParseResult<Expression>(new BooleanLiteralExpression(booleanLiteralToken), start + 1)
+                : null;
         }
 
         public static ParseResult<Statement> ParseStatement(ImmutableArray<Token> tokens, int start = 0)
@@ -241,30 +202,16 @@ namespace NCalcLib
 
         public static ParseResult<Statement> ParseIfElse(ImmutableArray<Token> tokens, int start = 0)
         {
-            if (start < tokens.Length
-                && tokens[start].Type == TokenType.IfKeyword)
+            if (GetNextToken(tokens, start, TokenType.IfKeyword) is Token ifToken
+                && ParseExpression(tokens, start + 1) is ParseResult<Expression> expressionParseResult
+                && ParseBlock(tokens, expressionParseResult.NextTokenIndex) is ParseResult<Block> trueBlockParseResult
+                && GetNextToken(tokens, trueBlockParseResult.NextTokenIndex, TokenType.ElseKeyword) is Token elseToken
+                && ParseBlock(tokens, trueBlockParseResult.NextTokenIndex + 1) is ParseResult<Block> falseBlockParseResult
+                && GetNextToken(tokens, falseBlockParseResult.NextTokenIndex, TokenType.EndKeyword) is Token endToken)
             {
-                var ifToken = tokens[start];
-                start = start + 1;
-
-                if (ParseExpression(tokens, start) is ParseResult<Expression> expressionParseResult)
-                {
-                    var trueBlockParseResult = ParseBlock(tokens, expressionParseResult.NextTokenIndex);
-                    if (trueBlockParseResult.NextTokenIndex < tokens.Length
-                        && tokens[trueBlockParseResult.NextTokenIndex].Type == TokenType.ElseKeyword)
-                    {
-                        var elseToken = tokens[trueBlockParseResult.NextTokenIndex];
-                        var falseBlockParseResult = ParseBlock(tokens, trueBlockParseResult.NextTokenIndex + 1);
-                        if (falseBlockParseResult.NextTokenIndex < tokens.Length
-                            && tokens[falseBlockParseResult.NextTokenIndex].Type == TokenType.EndKeyword)
-                        {
-                            var endToken = tokens[falseBlockParseResult.NextTokenIndex];
-                            return new ParseResult<Statement>(
-                                new IfElseStatement(ifToken, expressionParseResult.Node, trueBlockParseResult.Node, elseToken, falseBlockParseResult.Node, endToken),
-                                falseBlockParseResult.NextTokenIndex + 1);
-                        }
-                    }
-                }
+                return new ParseResult<Statement>(
+                    new IfElseStatement(ifToken, expressionParseResult.Node, trueBlockParseResult.Node, elseToken, falseBlockParseResult.Node, endToken),
+                    falseBlockParseResult.NextTokenIndex + 1);
             }
 
             return null;
@@ -272,25 +219,14 @@ namespace NCalcLib
 
         public static ParseResult<Statement> ParseIf(ImmutableArray<Token> tokens, int start = 0)
         {
-            if (start < tokens.Length
-                && tokens[start].Type == TokenType.IfKeyword)
+            if (GetNextToken(tokens, start, TokenType.IfKeyword) is Token ifToken
+                && ParseExpression(tokens, start + 1) is ParseResult<Expression> expressionParseResult
+                && ParseBlock(tokens, expressionParseResult.NextTokenIndex) is ParseResult<Block> blockParseResult
+                && GetNextToken(tokens, blockParseResult.NextTokenIndex, TokenType.EndKeyword) is Token endToken)
             {
-                var ifToken = tokens[start];
-                start = start + 1;
-
-                var expressionParseResult = ParseExpression(tokens, start);
-                if (expressionParseResult != null)
-                {
-                    var blockParseResult = ParseBlock(tokens, expressionParseResult.NextTokenIndex);
-                    if (blockParseResult.NextTokenIndex < tokens.Length
-                        && tokens[blockParseResult.NextTokenIndex].Type == TokenType.EndKeyword)
-                    {
-                        var endToken = tokens[blockParseResult.NextTokenIndex];
-                        return new ParseResult<Statement>(
-                            new IfStatement(ifToken, expressionParseResult.Node, blockParseResult.Node, endToken),
-                            blockParseResult.NextTokenIndex + 1);
-                    }
-                }
+                return new ParseResult<Statement>(
+                    new IfStatement(ifToken, expressionParseResult.Node, blockParseResult.Node, endToken),
+                     blockParseResult.NextTokenIndex + 1);
             }
 
             return null;
@@ -298,19 +234,15 @@ namespace NCalcLib
 
         public static ParseResult<Statement> ParseDeclaration(ImmutableArray<Token> tokens, int start = 0)
         {
-            if (start + 3 < tokens.Length
-                && tokens[start].Type == TokenType.Identifier
-                && tokens[start + 1].Type == TokenType.AsKeyword
-                && IsTypeToken(tokens[start + 2])
-                && tokens[start + 3].Type == TokenType.Equal)
+            if (GetNextToken(tokens, start, TokenType.Identifier) is Token identifierToken
+                && GetNextToken(tokens, start + 1, TokenType.AsKeyword) is Token asToken
+                && GetNextToken(tokens, start + 2, TokenType.BooleanKeyword, TokenType.NumberKeyword) is Token typeToken
+                && GetNextToken(tokens, start + 3, TokenType.Equal) is Token equalToken
+                && ParseExpression(tokens, start + 4) is ParseResult<Expression> expressionParseResult)
             {
-                var expressionParseResult = ParseExpression(tokens, start + 4);
-                if (expressionParseResult != null)
-                {
-                    return new ParseResult<Statement>(
-                        new DeclarationStatement(tokens[start], tokens[start + 1], tokens[start + 2], tokens[start + 3], expressionParseResult.Node),
-                        expressionParseResult.NextTokenIndex);
-                }
+                return new ParseResult<Statement>(
+                    new DeclarationStatement(identifierToken, asToken, typeToken, equalToken, expressionParseResult.Node),
+                    expressionParseResult.NextTokenIndex);
             }
 
             return null;
@@ -318,24 +250,19 @@ namespace NCalcLib
 
         public static ParseResult<Statement> ParseExpressionStatement(ImmutableArray<Token> tokens, int start = 0)
         {
-            var expressionParseResult = ParseExpression(tokens, start);
-            if (expressionParseResult != null)
-            {
-                return new ParseResult<Statement>(new ExpressionStatement(expressionParseResult.Node), expressionParseResult.NextTokenIndex);
-            }
-
-            return null;
+            return ParseExpression(tokens, start) is ParseResult<Expression> expressionParseResult
+                ? new ParseResult<Statement>(new ExpressionStatement(expressionParseResult.Node), expressionParseResult.NextTokenIndex)
+                : null;
         }
 
         public static ParseResult<Block> ParseBlock(ImmutableArray<Token> tokens, int start = 0)
         {
             var builder = ImmutableArray.CreateBuilder<Statement>();
-            var result = ParseStatement(tokens, start);
-            while (result != null)
+
+            while (ParseStatement(tokens, start) is ParseResult<Statement> result)
             {
                 builder.Add(result.Node);
                 start = result.NextTokenIndex;
-                result = ParseStatement(tokens, start);
             }
 
             return builder.Count == 0
