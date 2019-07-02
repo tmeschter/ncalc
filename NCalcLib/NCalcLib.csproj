@@ -77,6 +77,7 @@
     <Compile Include="Transformer.cs" />
     <Compile Include="TransformResult.cs" />
     <Compile Include="Utilities\HashCodes.cs" />
+    <Compile Include="WhileStatement.cs" />
     <Compile Include="Whitespace.cs" />
   </ItemGroup>
   <ItemGroup>

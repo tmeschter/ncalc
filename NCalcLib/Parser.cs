@@ -197,7 +197,23 @@ namespace NCalcLib
             return ParseIfElse(tokens, start)
                 ?? ParseIf(tokens, start)
                 ?? ParseDeclaration(tokens, start)
-                ?? ParseExpressionStatement(tokens, start);
+                ?? ParseExpressionStatement(tokens, start)
+                ?? ParseWhile(tokens, start);
+        }
+
+        public static ParseResult<Statement> ParseWhile(ImmutableArray<Token> tokens, int start = 0)
+        {
+            if (GetNextToken(tokens, start, TokenType.WhileKeyword) is Token whileToken
+                && ParseExpression(tokens, start + 1) is ParseResult<Expression> expressionParseResult
+                && ParseBlock(tokens, expressionParseResult.NextTokenIndex) is ParseResult<Block> bodyBlockParseResult
+                && GetNextToken(tokens, bodyBlockParseResult.NextTokenIndex, TokenType.EndKeyword) is Token endToken)
+            {
+                return new ParseResult<Statement>(
+                    new WhileStatement(whileToken, expressionParseResult.Node, bodyBlockParseResult.Node, endToken),
+                    bodyBlockParseResult.NextTokenIndex + 1);
+            }
+
+            return null;
         }
 
         public static ParseResult<Statement> ParseIfElse(ImmutableArray<Token> tokens, int start = 0)

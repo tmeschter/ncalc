@@ -25,6 +25,7 @@ namespace NCalcLib
         public static ExpressionStatement ExpressionStatement(Expression expression) => new ExpressionStatement(expression);
         public static IfStatement IfStatement(Token ifToken, Expression condition, Block trueBlock, Token endToken) => new IfStatement(ifToken, condition, trueBlock, endToken);
         public static IfElseStatement IfElseStatement(Token ifToken, Expression condition, Block trueBlock, Token elseToken, Block falseBlock, Token endToken) => new IfElseStatement(ifToken, condition, trueBlock, elseToken, falseBlock, endToken);
+        public static WhileStatement WhileStatement(Token whileToken, Expression condition, Block bodyBody, Token endToken) => new WhileStatement(whileToken, condition, bodyBody, endToken);
 
         public static EmptyBlock EmptyBlock(int start) => new EmptyBlock(start);
         public static Block Block(params Statement[] statements) => new NonEmptyBlock(ImmutableArray.Create(statements));

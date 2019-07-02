@@ -550,5 +550,43 @@ namespace NCalcLib.Test
             Assert.Equal(expectedStatement, parseResult.Node);
             Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
         }
+
+        [Fact]
+        public void WhileStatement_Basic()
+        {
+            var text = "while a b end";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseWhile(tokens);
+
+            var expectedStatement =
+                WhileStatement(
+                    tokens[0],
+                    IdentifierExpression(tokens[1]),
+                    Block(ExpressionStatement(IdentifierExpression(tokens[2]))),
+                    tokens[3]);
+            var expectedNextToken = 4;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
+        public void WhileStatement_NoBody()
+        {
+            var text = "while a end";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseWhile(tokens);
+
+            var expectedStatement =
+                WhileStatement(
+                    tokens[0],
+                    IdentifierExpression(tokens[1]),
+                    EmptyBlock(tokens[2].StartWithWhitespace),
+                    tokens[2]);
+            var expectedNextToken = 3;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
+        }
     }
 }
