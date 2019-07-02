@@ -29,7 +29,8 @@ namespace NCalcLib
         EndOfInput,
         IfKeyword,
         ElseKeyword,
-        EndKeyword
+        EndKeyword,
+        WhileKeyword
     }
 
     public sealed class Token : IEquatable<Token>

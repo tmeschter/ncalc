@@ -100,6 +100,8 @@ namespace NCalcLib.Test
         [InlineData("endfoo", TokenType.Identifier)]
         [InlineData("true", TokenType.TrueLiteral)]
         [InlineData("truefoo", TokenType.Identifier)]
+        [InlineData("while", TokenType.WhileKeyword)]
+        [InlineData("whilefoo", TokenType.Identifier)]
         public void IdentifierOrKeyword_Lexes(string text, TokenType expectedType)
         {
             for (var precedingWhitespaceLength = 0; precedingWhitespaceLength <= 2; precedingWhitespaceLength++)
