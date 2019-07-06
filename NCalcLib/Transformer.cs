@@ -47,6 +47,9 @@ namespace NCalcLib
                 case Block block:
                     return TransformBlock(bindingContext, block);
 
+                case WhileStatement statement:
+                    return TransformWhile(bindingContext, statement);
+
                 default:
                     throw new InvalidOperationException();
             }
@@ -94,6 +97,24 @@ namespace NCalcLib
             var ifElseExpression = LinqExpression.IfThenElse(conditionalExpression, trueExpression, falseExpression);
 
             return new TransformResult(bindingContext, ifElseExpression, conditionalErrors.AddRange(trueBodyErrors).AddRange(falseBodyErrors));
+        }
+
+        private static TransformResult TransformWhile(IBindingContext bindingContext, WhileStatement statement)
+        {
+            var (newBindingContext, conditionalExpression, conditionalErrors) = Transform(bindingContext, statement.Condition);
+            var (newBodyBindingContext, bodyExpression, bodyErrors) = Transform(newBindingContext, statement.BodyBlock);
+
+            var breakLabel = LinqExpression.Label("LoopBreak");
+
+            var loopExpression = 
+                LinqExpression.Loop(
+                    LinqExpression.IfThenElse(
+                        conditionalExpression,
+                        bodyExpression,
+                        LinqExpression.Break(breakLabel)),
+                    breakLabel);
+
+            return new TransformResult(bindingContext, loopExpression, conditionalErrors.AddRange(bodyErrors));
         }
 
         private static TransformResult TransformIdentifier(IBindingContext bindingContext, IdentifierExpression identifier)
