@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Immutable;
+using System.Text;
 using NCalcLib;
 using LinqExpression = System.Linq.Expressions.Expression;
 
@@ -10,31 +10,59 @@ namespace ncalc
         public static void Main(string[] args)
         {
             var globalBindingContext = GlobalBindingContext.Empty;
+
+            var inputBuilder = new StringBuilder();
+
             while (true)
             {
-                Console.Write("> ");
-                var input = Console.ReadLine();
-
-                if (string.IsNullOrEmpty(input))
+                if (inputBuilder.Length == 0)
                 {
-                    break;
+                    Console.Write("> ");
+                }
+                else
+                {
+                    Console.Write(". ");
                 }
 
-                var tokens = Lexer.LexSubmission(input);
-                var expressionSyntax = Parser.ParseExpressionSubmission(tokens);
-                if (expressionSyntax != null)
+                var rawInput = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(rawInput))
                 {
-                    globalBindingContext = HandleExpression(globalBindingContext, expressionSyntax);
+                    inputBuilder.Clear();
                     continue;
                 }
 
-                var statementSyntax = Parser.ParseStatementSubmission(tokens);
-                if (statementSyntax != null)
+                inputBuilder.AppendLine(rawInput);
+
+                var input = inputBuilder.ToString();
+
+                bool success;
+                (success, globalBindingContext) = TryProcessInput(input, globalBindingContext);
+                if (success)
                 {
-                    globalBindingContext = HandleStatement(globalBindingContext, statementSyntax);
-                    continue;
+                    inputBuilder.Clear();
                 }
             }
+        }
+
+        private static (bool success, GlobalBindingContext newBindingContext) TryProcessInput(string input, GlobalBindingContext bindingContext)
+        {
+            var tokens = Lexer.LexSubmission(input);
+            var expressionSyntax = Parser.ParseExpressionSubmission(tokens);
+            if (expressionSyntax != null)
+            {
+                var newBindingContext = HandleExpression(bindingContext, expressionSyntax);
+                return (true, newBindingContext);
+            }
+
+            var statementSyntax = Parser.ParseStatementSubmission(tokens);
+            if (statementSyntax != null)
+            {
+                var newBindingContext = HandleStatement(bindingContext, statementSyntax);
+                return (true, newBindingContext);
+            }
+
+            return (false, bindingContext);
         }
 
         private static GlobalBindingContext HandleStatement(GlobalBindingContext bindingContext, Statement statementSyntax)
