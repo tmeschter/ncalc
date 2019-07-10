@@ -131,11 +131,12 @@ namespace NCalcLib
             }
         }
 
-        private static TransformResult TransformNumericBinop(
+        private static TransformResult TransformBinopCore(
             IBindingContext bindingContext,
             BinaryExpression binop,
             Func<LinqExpression, LinqExpression, LinqExpression> createLinqBinop,
-            Func<BinaryExpression, LinqExpression, LinqExpression, ImmutableList<Diagnostic>> typeCheckBinop)
+            Func<BinaryExpression, LinqExpression, LinqExpression, ImmutableList<Diagnostic>> typeCheckBinop,
+            Type errorType)
         {
             LinqExpression left;
             LinqExpression right;
@@ -148,7 +149,7 @@ namespace NCalcLib
 
             var linqBinop = typeCheckErrors.Count == 0
                 ? createLinqBinop(left, right)
-                : LinqExpression.Default(typeof(decimal));
+                : LinqExpression.Default(errorType);
 
             return new TransformResult(bindingContext, linqBinop, leftErrors.AddRange(rightErrors).AddRange(typeCheckErrors));
         }
@@ -166,6 +167,24 @@ namespace NCalcLib
             if (!right.HasDecimalType())
             {
                 typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Right.Start(), binop.Right.Length(), string.Format(errorString, typeof(decimal), right.Type)));
+            }
+
+            return typeCheckErrors;
+        }
+
+        private static ImmutableList<Diagnostic> TypeCheckBooleanBinop(BinaryExpression binop, LinqExpression left, LinqExpression right)
+        {
+            var typeCheckErrors = ImmutableList<Diagnostic>.Empty;
+            var errorString = "Expected type '{0}' but found '{1}' instead.";
+
+            if (!left.HasBooleanType())
+            {
+                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Left.Start(), binop.Left.Length(), string.Format(errorString, typeof(bool), left.Type)));
+            }
+
+            if (!right.HasBooleanType())
+            {
+                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Right.Start(), binop.Right.Length(), string.Format(errorString, typeof(bool), right.Type)));
             }
 
             return typeCheckErrors;
@@ -260,16 +279,18 @@ namespace NCalcLib
 
             switch (binop.Operator.Text)
             {
-                case "+": return TransformNumericBinop(bindingContext, binop, LinqExpression.Add, TypeCheckNumericBinop);
-                case "-": return TransformNumericBinop(bindingContext, binop, LinqExpression.Subtract, TypeCheckNumericBinop);
-                case "*": return TransformNumericBinop(bindingContext, binop, LinqExpression.Multiply, TypeCheckNumericBinop);
-                case "/": return TransformNumericBinop(bindingContext, binop, LinqExpression.Divide, TypeCheckNumericBinop);
-                case "<": return TransformNumericBinop(bindingContext, binop, LinqExpression.LessThan, TypeCheckNumericBinop);
-                case "<=": return TransformNumericBinop(bindingContext, binop, LinqExpression.LessThanOrEqual, TypeCheckNumericBinop);
-                case ">": return TransformNumericBinop(bindingContext, binop, LinqExpression.GreaterThan, TypeCheckNumericBinop);
-                case ">=": return TransformNumericBinop(bindingContext, binop, LinqExpression.GreaterThanOrEqual, TypeCheckNumericBinop);
-                case "!=": return TransformNumericBinop(bindingContext, binop, LinqExpression.NotEqual, TypeCheckMatchingNumericOrBooleanTypes);
-                case "==": return TransformNumericBinop(bindingContext, binop, LinqExpression.Equal, TypeCheckMatchingNumericOrBooleanTypes);
+                case "+": return TransformBinopCore(bindingContext, binop, LinqExpression.Add, TypeCheckNumericBinop, typeof(decimal));
+                case "-": return TransformBinopCore(bindingContext, binop, LinqExpression.Subtract, TypeCheckNumericBinop, typeof(decimal));
+                case "*": return TransformBinopCore(bindingContext, binop, LinqExpression.Multiply, TypeCheckNumericBinop, typeof(decimal));
+                case "/": return TransformBinopCore(bindingContext, binop, LinqExpression.Divide, TypeCheckNumericBinop, typeof(decimal));
+                case "<": return TransformBinopCore(bindingContext, binop, LinqExpression.LessThan, TypeCheckNumericBinop, typeof(decimal));
+                case "<=": return TransformBinopCore(bindingContext, binop, LinqExpression.LessThanOrEqual, TypeCheckNumericBinop, typeof(decimal));
+                case ">": return TransformBinopCore(bindingContext, binop, LinqExpression.GreaterThan, TypeCheckNumericBinop, typeof(decimal));
+                case ">=": return TransformBinopCore(bindingContext, binop, LinqExpression.GreaterThanOrEqual, TypeCheckNumericBinop, typeof(decimal));
+                case "!=": return TransformBinopCore(bindingContext, binop, LinqExpression.NotEqual, TypeCheckMatchingNumericOrBooleanTypes, typeof(bool));
+                case "==": return TransformBinopCore(bindingContext, binop, LinqExpression.Equal, TypeCheckMatchingNumericOrBooleanTypes, typeof(bool));
+                case "or": return TransformBinopCore(bindingContext, binop, LinqExpression.OrElse, TypeCheckBooleanBinop, typeof(bool));
+                case "and": return TransformBinopCore(bindingContext, binop, LinqExpression.AndAlso, TypeCheckBooleanBinop, typeof(bool));
                 case "=": return transformAssignment();
                 default: throw new InvalidOperationException();
             }
