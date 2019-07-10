@@ -386,6 +386,63 @@ namespace NCalcLib.Test
         }
 
         [Fact]
+        public void ConditionalOr()
+        {
+            var text = "true or false";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseConditionalOr(tokens);
+
+            var expectedExpression =
+                BinaryExpression(
+                    BooleanLiteralExpression(tokens[0]),
+                    tokens[1],
+                    BooleanLiteralExpression(tokens[2]));
+            var expectedNextTokenIndex = 3;
+
+            Assert.Equal(expectedExpression, parseResult.Node);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
+        public void ConditionalAnd()
+        {
+            var text = "true and false";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseConditionalOr(tokens);
+
+            var expectedExpression =
+                BinaryExpression(
+                    BooleanLiteralExpression(tokens[0]),
+                    tokens[1],
+                    BooleanLiteralExpression(tokens[2]));
+            var expectedNextTokenIndex = 3;
+
+            Assert.Equal(expectedExpression, parseResult.Node);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
+        public void Conditional_AndOrCombined()
+        {
+            var text = "false or true and false";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseConditionalOr(tokens);
+
+            var expectedExpression =
+                BinaryExpression(
+                    BooleanLiteralExpression(tokens[0]),
+                    tokens[1],
+                    BinaryExpression(
+                        BooleanLiteralExpression(tokens[2]),
+                        tokens[3],
+                        BooleanLiteralExpression(tokens[4])));
+            var expectedNextTokenIndex = 5;
+
+            Assert.Equal(expectedExpression, parseResult.Node);
+            Assert.Equal(expectedNextTokenIndex, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
         public void Assignment_Parenthesized()
         {
             var text = "a = (b = 2)";

@@ -177,7 +177,7 @@ namespace NCalcLib
                 }
             }
 
-            return ParseEquality(tokens, start);
+            return ParseConditionalOr(tokens, start);
         }
 
         public static ParseResult<Expression> ParseExpression(ImmutableArray<Token> tokens, int start = 0)
@@ -285,5 +285,16 @@ namespace NCalcLib
                 ? new ParseResult<Block>(new EmptyBlock(tokens[start].StartWithWhitespace), start)
                 : new ParseResult<Block>(new NonEmptyBlock(builder.ToImmutable()), start);
         }
+
+        public static ParseResult<Expression> ParseConditionalOr(ImmutableArray<Token> tokens, int start = 0)
+        {
+            return ParseLeftAssociativeBinop(tokens, start, new[] { TokenType.OrKeyword }, ParseConditionalAnd);
+        }
+
+        public static ParseResult<Expression> ParseConditionalAnd(ImmutableArray<Token> tokens, int start = 0)
+        {
+            return ParseLeftAssociativeBinop(tokens, start, new[] { TokenType.AndKeyword }, ParseEquality);
+        }
+
     }
 }
