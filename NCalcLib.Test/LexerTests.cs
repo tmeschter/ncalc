@@ -82,6 +82,8 @@ namespace NCalcLib.Test
         }
 
         [Theory]
+        [InlineData("and", TokenType.AndKeyword)]
+        [InlineData("andfoo", TokenType.Identifier)]
         [InlineData("as", TokenType.AsKeyword)]
         [InlineData("asfoo", TokenType.Identifier)]
         [InlineData("boolean", TokenType.BooleanKeyword)]
@@ -98,6 +100,8 @@ namespace NCalcLib.Test
         [InlineData("numberfoo", TokenType.Identifier)]
         [InlineData("end", TokenType.EndKeyword)]
         [InlineData("endfoo", TokenType.Identifier)]
+        [InlineData("or", TokenType.OrKeyword)]
+        [InlineData("orfoo", TokenType.Identifier)]
         [InlineData("true", TokenType.TrueLiteral)]
         [InlineData("truefoo", TokenType.Identifier)]
         [InlineData("while", TokenType.WhileKeyword)]

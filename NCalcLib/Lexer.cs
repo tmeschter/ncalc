@@ -111,6 +111,8 @@ namespace NCalcLib
                 case "else": return identifierToken.WithType(TokenType.ElseKeyword);
                 case "end": return identifierToken.WithType(TokenType.EndKeyword);
                 case "while": return identifierToken.WithType(TokenType.WhileKeyword);
+                case "and": return identifierToken.WithType(TokenType.AndKeyword);
+                case "or": return identifierToken.WithType(TokenType.OrKeyword);
                 default: return identifierToken;
             }
         }
