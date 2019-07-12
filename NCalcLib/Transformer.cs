@@ -156,35 +156,27 @@ namespace NCalcLib
 
         private static ImmutableList<Diagnostic> TypeCheckNumericBinop(BinaryExpression binop, LinqExpression left, LinqExpression right)
         {
+            return TypeCheckBinopCore(binop, left, right, typeof(decimal));
+        }
+
+        private static ImmutableList<Diagnostic> TypeCheckBooleanBinop(BinaryExpression binop, LinqExpression left, LinqExpression right)
+        {
+            return TypeCheckBinopCore(binop, left, right, typeof(bool));
+        }
+
+        private static ImmutableList<Diagnostic> TypeCheckBinopCore(BinaryExpression binop, LinqExpression left, LinqExpression right, Type expectedType)
+        {
             var typeCheckErrors = ImmutableList<Diagnostic>.Empty;
             var errorString = "Expected type '{0}' but found '{1}' instead.";
 
             if (!left.HasDecimalType())
             {
-                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Left.Start(), binop.Left.Length(), string.Format(errorString, typeof(decimal), left.Type)));
+                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Left.Start(), binop.Left.Length(), string.Format(errorString, expectedType, left.Type)));
             }
 
             if (!right.HasDecimalType())
             {
-                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Right.Start(), binop.Right.Length(), string.Format(errorString, typeof(decimal), right.Type)));
-            }
-
-            return typeCheckErrors;
-        }
-
-        private static ImmutableList<Diagnostic> TypeCheckBooleanBinop(BinaryExpression binop, LinqExpression left, LinqExpression right)
-        {
-            var typeCheckErrors = ImmutableList<Diagnostic>.Empty;
-            var errorString = "Expected type '{0}' but found '{1}' instead.";
-
-            if (!left.HasBooleanType())
-            {
-                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Left.Start(), binop.Left.Length(), string.Format(errorString, typeof(bool), left.Type)));
-            }
-
-            if (!right.HasBooleanType())
-            {
-                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Right.Start(), binop.Right.Length(), string.Format(errorString, typeof(bool), right.Type)));
+                typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Right.Start(), binop.Right.Length(), string.Format(errorString, expectedType, right.Type)));
             }
 
             return typeCheckErrors;
