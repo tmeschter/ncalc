@@ -47,27 +47,30 @@ namespace ncalc
 
         private static (bool success, GlobalBindingContext newBindingContext) TryProcessInput(string input, GlobalBindingContext bindingContext)
         {
-            var tokens = Lexer.LexSubmission(input);
-            var expressionSyntax = Parser.ParseExpressionSubmission(tokens);
-            if (expressionSyntax != null)
+            var (succeeded, newBindingContext) = HandleExpression(input, bindingContext);
+            if (succeeded)
             {
-                var newBindingContext = HandleExpression(bindingContext, expressionSyntax);
                 return (true, newBindingContext);
             }
 
-            var statementSyntax = Parser.ParseStatementSubmission(tokens);
-            if (statementSyntax != null)
+            (succeeded, newBindingContext) = HandleStatement(input, bindingContext);
+            if (succeeded)
             {
-                var newBindingContext = HandleStatement(bindingContext, statementSyntax);
                 return (true, newBindingContext);
             }
 
             return (false, bindingContext);
         }
 
-        private static GlobalBindingContext HandleStatement(GlobalBindingContext bindingContext, Statement statementSyntax)
+        private static (bool, GlobalBindingContext) HandleStatement(string input, GlobalBindingContext bindingContext)
         {
-            Console.WriteLine(statementSyntax);
+            var tokens = Lexer.LexSubmission(input);
+            var statementSyntax = Parser.ParseStatementSubmission(tokens);
+            if (statementSyntax == null)
+            {
+                return (false, bindingContext);
+            }
+
             var (newBindingContext, expression, errors) = Transformer.Transform(bindingContext, statementSyntax);
             if (errors.Count > 0)
             {
@@ -78,19 +81,26 @@ namespace ncalc
                     Console.WriteLine($"  {new string(' ', error.Start)}{new string('^', error.Length)}");
                 }
 
-                return bindingContext;
+                return (true, bindingContext);
             }
 
             var lambda = LinqExpression.Lambda<Action>(expression);
             var compiledLambda = lambda.Compile();
             compiledLambda();
 
-            return (GlobalBindingContext)newBindingContext;
+            return (true, (GlobalBindingContext)newBindingContext);
         }
 
-        private static GlobalBindingContext HandleExpression(GlobalBindingContext bindingContext, Expression expressionSyntax)
+        private static (bool, GlobalBindingContext) HandleExpression(string input, GlobalBindingContext bindingContext)
         {
-            (var newBindingContext, var expression, var errors) = Transformer.Transform(bindingContext, expressionSyntax);
+            var tokens = Lexer.LexSubmission(input);
+            var expressionSyntax = Parser.ParseExpressionSubmission(tokens);
+            if (expressionSyntax == null)
+            {
+                return (false, bindingContext);
+            }
+
+            var (newBindingContext, expression, errors) = Transformer.Transform(bindingContext, expressionSyntax);
             if (errors.Count > 0)
             {
                 foreach (var error in errors)
@@ -100,12 +110,7 @@ namespace ncalc
                     Console.WriteLine($"  {new string(' ', error.Start)}{new string('^', error.Length)}");
                 }
 
-                return bindingContext;
-            }
-
-            if (expression == null)
-            {
-                return bindingContext;
+                return (true, bindingContext);
             }
 
             expression = LinqExpression.Convert(expression, typeof(object));
@@ -115,7 +120,7 @@ namespace ncalc
             var result = compiledLambda();
             Console.WriteLine(result);
 
-            return (GlobalBindingContext)newBindingContext;
+            return (true, (GlobalBindingContext)newBindingContext);
         }
     }
 }
