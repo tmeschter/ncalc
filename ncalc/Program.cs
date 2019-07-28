@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using NCalcLib;
 using LinqExpression = System.Linq.Expressions.Expression;
@@ -74,12 +76,7 @@ namespace ncalc
             var (newBindingContext, expression, errors) = Transformer.Transform(bindingContext, statementSyntax);
             if (errors.Count > 0)
             {
-                foreach (var error in errors)
-                {
-                    Console.WriteLine(error.Message);
-                    Console.WriteLine($"  {statementSyntax}");
-                    Console.WriteLine($"  {new string(' ', error.Start)}{new string('^', error.Length)}");
-                }
+                OutputErrors(input, errors);
 
                 return (true, bindingContext);
             }
@@ -89,6 +86,53 @@ namespace ncalc
             compiledLambda();
 
             return (true, (GlobalBindingContext)newBindingContext);
+        }
+
+        private static void OutputErrors(string input, System.Collections.Immutable.ImmutableList<Diagnostic> errors)
+        {
+            var lineMap = new LineMap(input);
+
+            foreach (var error in errors)
+            {
+                int firstPosition = error.Start;
+                int lastPosition = error.Start + error.Length - 1;
+
+                (int firstLine, int firstColumn) = lineMap.MapPositionToLineAndColumn(firstPosition);
+                (int lastLine, int lastColumn) = lineMap.MapPositionToLineAndColumn(lastPosition);
+
+                if (firstLine == lastLine)
+                {
+                    Console.WriteLine($"Line {firstLine + 1}: {error.Message}");
+                    string lineText = lineMap.GetLineText(firstLine);
+                    Console.WriteLine($"  {lineText}");
+                    Console.WriteLine($"  {new string(' ', firstColumn)}{new string('^', lastColumn - firstColumn + 1)}");
+                }
+                else
+                {
+                    Console.WriteLine($"Lines {firstLine + 1}-{lastLine + 1}: {error.Message}");
+
+                    // First line
+                    string lineText = lineMap.GetLineText(firstLine);
+                    Console.WriteLine($"  {lineText}");
+                    Console.WriteLine($"  {new string(' ', firstColumn)}{new string('^', lineText.Length - firstColumn)}");
+
+                    // Middle lines
+                    for (int index = firstLine + 1; index < lastLine; index++)
+                    {
+                        lineText = lineMap.GetLineText(index);
+                        Console.WriteLine($"  {lineText}");
+                        Console.WriteLine($"  {new string('^', lineText.Length)}");
+                    }
+
+                    // End line
+                    if (lastLine != firstLine)
+                    {
+                        lineText = lineMap.GetLineText(lastLine);
+                        Console.WriteLine($"  {lineText}");
+                        Console.WriteLine($"  {new string('^', lastColumn + 1)}");
+                    }
+                }
+            }
         }
 
         private static (bool, GlobalBindingContext) HandleExpression(string input, GlobalBindingContext bindingContext)
@@ -103,12 +147,7 @@ namespace ncalc
             var (newBindingContext, expression, errors) = Transformer.Transform(bindingContext, expressionSyntax);
             if (errors.Count > 0)
             {
-                foreach (var error in errors)
-                {
-                    Console.WriteLine(error.Message);
-                    Console.WriteLine($"  {expressionSyntax}");
-                    Console.WriteLine($"  {new string(' ', error.Start)}{new string('^', error.Length)}");
-                }
+                OutputErrors(input, errors);
 
                 return (true, bindingContext);
             }

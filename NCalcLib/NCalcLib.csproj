@@ -51,6 +51,7 @@
     <Compile Include="IBindingContext.cs" />
     <Compile Include="IfElseStatement.cs" />
     <Compile Include="IfStatement.cs" />
+    <Compile Include="LineMap.cs" />
     <Compile Include="LocalBindingContext.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="NonEmptyBlock.cs" />
