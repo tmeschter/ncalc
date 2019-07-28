@@ -83,7 +83,20 @@ namespace NCalcLib
             var (newBindingContext, conditionalExpression, conditionalErrors) = Transform(bindingContext, statement.Condition);
             var (newBodyBindingContext, bodyExpression, bodyErrors) = Transform(newBindingContext, statement.TrueBlock);
 
-            var ifExpression = LinqExpression.IfThen(conditionalExpression, bodyExpression);
+            System.Linq.Expressions.ConditionalExpression ifExpression;
+            if (conditionalExpression.Type == typeof(bool))
+            {
+                ifExpression = LinqExpression.IfThen(conditionalExpression, bodyExpression);
+            }
+            else
+            {
+                conditionalErrors = conditionalErrors.Add(
+                    new Diagnostic(
+                        statement.Condition.Start(),
+                        statement.Condition.Length(),
+                        $"Expected type '{typeof(bool)}' but found type '{conditionalExpression.Type}' instead."));
+                ifExpression = LinqExpression.IfThen(LinqExpression.Constant(false), bodyExpression);
+            }
 
             return new TransformResult(bindingContext, ifExpression, conditionalErrors.AddRange(bodyErrors));
         }
@@ -94,7 +107,20 @@ namespace NCalcLib
             var (trueBodyBindingContext, trueExpression, trueBodyErrors) = Transform(newBindingContext, statement.TrueBlock);
             var (falseBodyBindingContext, falseExpression, falseBodyErrors) = Transform(newBindingContext, statement.FalseBlock);
 
-            var ifElseExpression = LinqExpression.IfThenElse(conditionalExpression, trueExpression, falseExpression);
+            System.Linq.Expressions.ConditionalExpression ifElseExpression;
+            if (conditionalExpression.Type == typeof(bool))
+            {
+                ifElseExpression = LinqExpression.IfThenElse(conditionalExpression, trueExpression, falseExpression);
+            }
+            else
+            {
+                conditionalErrors = conditionalErrors.Add(
+                    new Diagnostic(
+                        statement.Condition.Start(),
+                        statement.Condition.Length(),
+                        $"Expected type '{typeof(bool)}' but found type '{conditionalExpression.Type}' instead."));
+                ifElseExpression = LinqExpression.IfThenElse(LinqExpression.Constant(false), trueExpression, falseExpression);
+            }
 
             return new TransformResult(bindingContext, ifElseExpression, conditionalErrors.AddRange(trueBodyErrors).AddRange(falseBodyErrors));
         }
@@ -169,12 +195,12 @@ namespace NCalcLib
             var typeCheckErrors = ImmutableList<Diagnostic>.Empty;
             var errorString = "Expected type '{0}' but found '{1}' instead.";
 
-            if (!left.HasDecimalType())
+            if (left.Type != expectedType)
             {
                 typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Left.Start(), binop.Left.Length(), string.Format(errorString, expectedType, left.Type)));
             }
 
-            if (!right.HasDecimalType())
+            if (right.Type != expectedType)
             {
                 typeCheckErrors = typeCheckErrors.Add(new Diagnostic(binop.Right.Start(), binop.Right.Length(), string.Format(errorString, expectedType, right.Type)));
             }
