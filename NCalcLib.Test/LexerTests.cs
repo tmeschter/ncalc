@@ -123,6 +123,37 @@ namespace NCalcLib.Test
             }
         }
 
+        [Theory]
+        [InlineData("\"foo\"")]
+        [InlineData("\"alpha beta\"")]
+        [InlineData("\"alpha\r\nbeta\"")]
+        public void StringLiteral_Lexes(string text)
+        {
+            for (var precedingWhitespaceLength = 0; precedingWhitespaceLength <= 2; precedingWhitespaceLength++)
+            {
+                var textWithWhitespace = new string(' ', precedingWhitespaceLength) + text;
+                var token = Lexer.LexStringLiteral(textWithWhitespace);
+
+                var expectedStartWithWhitespace = 0;
+                var expectedLengthWithWhitespace = textWithWhitespace.Length;
+                var expectedStart = precedingWhitespaceLength;
+                var expectedLength = text.Length;
+
+                Assert.Equal(expected: text, actual: token.Text);
+                AssertStartLengthAndType(token, TokenType.StringLiteral, expectedStartWithWhitespace, expectedLengthWithWhitespace, expectedStart, expectedLength);
+            }
+        }
+
+        [Theory]
+        [InlineData("\"foo")]
+        [InlineData("foo\"")]
+        public void StringLiteral_DoesNotLex(string text)
+        {
+            var token = Lexer.LexStringLiteral(text);
+
+            Assert.Null(token);
+        }
+
         private static void AssertStartLengthAndType(Token token, TokenType expectedType, int expectedStartWithWhitespace, int expectedLengthWithWhitespace, int expectedStart, int expectedLength)
         {
             Assert.Equal(expectedType, actual: token.Type);

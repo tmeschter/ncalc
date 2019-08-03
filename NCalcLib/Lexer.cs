@@ -170,9 +170,39 @@ namespace NCalcLib
                 ?? LexSimpleToken(text, start, "/", TokenType.Slash)
                 ?? LexSimpleToken(text, start, "(", TokenType.LeftParen)
                 ?? LexSimpleToken(text, start, ")", TokenType.RightParen)
+                ?? LexStringLiteral(text, start)
                 ?? LexNumberLiteral(text, start)
                 ?? LexIdentifierOrKeyword(text, start)
                 ?? LexEndOfInput(text, start);
+        }
+
+        public static Token LexStringLiteral(string text, int start = 0)
+        {
+            var whitespace = LexWhitespace(text, start);
+            start = start + whitespace.Length;
+
+            int index = start;
+            if (index >= text.Length
+                || text[index] != '"')
+            {
+                return null;
+            }
+            index++;
+
+            while (index < text.Length
+                   && text[index] != '"')
+            {
+                index++;
+            }
+
+            if (index >= text.Length
+                || text[index] != '"')
+            {
+                return null;
+            }
+            index++;
+
+            return new Token(whitespace, text.Substring(start, index - start), TokenType.StringLiteral);
         }
 
         public static ImmutableArray<Token> LexSubmission(string submission)

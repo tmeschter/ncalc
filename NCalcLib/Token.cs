@@ -32,7 +32,8 @@ namespace NCalcLib
         EndKeyword,
         WhileKeyword,
         AndKeyword,
-        OrKeyword
+        OrKeyword,
+        StringLiteral
     }
 
     public sealed class Token : IEquatable<Token>
