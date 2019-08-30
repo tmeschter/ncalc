@@ -73,6 +73,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resource1.resx</DependentUpon>
     </Compile>
+    <Compile Include="StringLiteralExpression.cs" />
     <Compile Include="SyntaxFactory.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="Transformer.cs" />

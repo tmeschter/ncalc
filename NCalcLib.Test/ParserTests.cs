@@ -645,5 +645,20 @@ namespace NCalcLib.Test
             Assert.Equal(expectedStatement, parseResult.Node);
             Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
         }
+
+        [Fact]
+        public void StringLiteralExpression_Basic()
+        {
+            var text = "\"Foo\"";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseStringLiteral(tokens);
+
+            var expectedExpression = StringLiteralExpression(tokens[0]);
+            var expectedNextToken = 1;
+
+            Assert.Equal(expectedExpression, parseResult.Node);
+            Assert.Equal(expectedNextToken, parseResult.NextTokenIndex);
+
+        }
     }
 }

@@ -40,6 +40,11 @@ namespace NCalcLib
             ? new ParseResult<Expression>(new NumberLiteralExpression(token), start + 1)
             : null;
 
+        public static ParseResult<Expression> ParseStringLiteral(ImmutableArray<Token> tokens, int start = 0) =>
+            GetNextToken(tokens, start, TokenType.StringLiteral) is Token token
+            ? new ParseResult<Expression>(new StringLiteralExpression(token), start + 1)
+            : null;
+
         public static ParseResult<Expression> ParseNegationExpression(ImmutableArray<Token> tokens, int start = 0)
         {
             Token operatorToken = GetNextToken(tokens, start, TokenType.Minus);
@@ -64,6 +69,7 @@ namespace NCalcLib
         public static ParseResult<Expression> ParseOperandExpression(ImmutableArray<Token> tokens, int start = 0)
         {
             return ParseNumberLiteral(tokens, start)
+                ?? ParseStringLiteral(tokens, start)
                 ?? ParseParenthensizedExpression(tokens, start)
                 ?? ParseBooleanLiteral(tokens, start)
                 ?? ParseIdentifier(tokens, start);
