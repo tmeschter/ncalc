@@ -484,6 +484,23 @@ namespace NCalcLib.Test
         }
 
         [Fact]
+        public void DeclarationStatementWithStringType()
+        {
+            var text = "a as string = \"foo\"";
+            var tokens = Lexer.LexSubmission(text);
+            var parseResult = Parser.ParseDeclaration(tokens);
+
+            var expectedStatement =
+                Declaration(
+                    tokens[0], tokens[1], tokens[2], tokens[3],
+                StringLiteralExpression(tokens[4]));
+            var expectedNextTokenDeclaration = 5;
+
+            Assert.Equal(expectedStatement, parseResult.Node);
+            Assert.Equal(expectedNextTokenDeclaration, parseResult.NextTokenIndex);
+        }
+
+        [Fact]
         public void IfStatement_Basic()
         {
             var text = @"if true a end";

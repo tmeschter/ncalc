@@ -258,7 +258,7 @@ namespace NCalcLib
         {
             if (GetNextToken(tokens, start, TokenType.Identifier) is Token identifierToken
                 && GetNextToken(tokens, start + 1, TokenType.AsKeyword) is Token asToken
-                && GetNextToken(tokens, start + 2, TokenType.BooleanKeyword, TokenType.NumberKeyword) is Token typeToken
+                && GetNextToken(tokens, start + 2, TokenType.BooleanKeyword, TokenType.NumberKeyword, TokenType.StringKeyword) is Token typeToken
                 && GetNextToken(tokens, start + 3, TokenType.Equal) is Token equalToken
                 && ParseExpression(tokens, start + 4) is ParseResult<Expression> expressionParseResult)
             {

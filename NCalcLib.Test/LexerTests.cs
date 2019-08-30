@@ -102,6 +102,8 @@ namespace NCalcLib.Test
         [InlineData("endfoo", TokenType.Identifier)]
         [InlineData("or", TokenType.OrKeyword)]
         [InlineData("orfoo", TokenType.Identifier)]
+        [InlineData("string", TokenType.StringKeyword)]
+        [InlineData("stringfoo", TokenType.Identifier)]
         [InlineData("true", TokenType.TrueLiteral)]
         [InlineData("truefoo", TokenType.Identifier)]
         [InlineData("while", TokenType.WhileKeyword)]
