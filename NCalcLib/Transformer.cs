@@ -29,6 +29,9 @@ namespace NCalcLib
                 case NumberLiteralExpression number:
                     return new TransformResult(bindingContext, LinqExpression.Constant(number.Value));
 
+                case StringLiteralExpression str:
+                    return new TransformResult(bindingContext, LinqExpression.Constant(str.Value));
+
                 case ParenthesizedExpression paren:
                     return Transform(bindingContext, paren.SubExpression);
 
@@ -241,11 +244,13 @@ namespace NCalcLib
                 case TokenType.NumberKeyword:
                     type = typeof(decimal);
                     break;
+                case TokenType.StringKeyword:
+                    type = typeof(string);
+                    break;
                 default:
                     type = typeof(decimal);
                     leftErrors = leftErrors.Add(new Diagnostic(declaration.Type.Start, declaration.Type.Length, $"Unknown type '{declaration.Type.Text}'."));
                     break;
-
             }
 
             LinqExpression initExpression;
